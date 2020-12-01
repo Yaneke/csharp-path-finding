@@ -11,4 +11,10 @@
     <PackageReference Include="MSTest.TestAdapter" Version="1.4.0" />
     <PackageReference Include="MSTest.TestFramework" Version="1.4.0" />
   </ItemGroup>
+
+  <ItemGroup>
+  <Reference Include="PathPlanning">
+    <HintPath>dll\PathPlanning.dll</HintPath>
+  </Reference>
+</ItemGroup>
 </Project>
