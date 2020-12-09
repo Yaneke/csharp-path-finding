@@ -14,7 +14,7 @@ namespace graph {
             }
         }
 
-        /// Create a Path with only the source
+        /// <summary> Create a Path from the source. <summary>
         public Path(Vertex source) {
             this.parent = null;
             this.gCost = 0f;
@@ -23,7 +23,7 @@ namespace graph {
             this.vertex = source;
         }
 
-        /// Build a NodePath with a parent
+        /// <summary> Build a NodePath with a parent. </summary>
         public Path(Vertex vertex, Path parent, float hCost, float edgeCost) {
             this.vertex = vertex;
             this.parent = parent;
@@ -32,10 +32,21 @@ namespace graph {
             this.length = parent.length + 1;
         }
 
+        /// <summary> Build a NodePath from an edge. </summary>
+        public Path(Path parent, Edge edge, float hCost) {
+            this.vertex = edge.neighbour;
+            this.parent = parent;
+            this.gCost = parent.gCost + edge.cost;
+            this.hCost = hCost;
+            this.length = parent.length + 1;
+        }
+
         public List<Edge> GetEdges() {
             return this.vertex.GetEdges();
         }
 
+        /// <summary>Two paths compare to each other in terms of cost. In case of equality, 
+        /// we compare the heuristic values.</summary>
         public int CompareTo(Path other) {
             if (this.cost < other.cost) {
                 return -1;
@@ -55,6 +66,7 @@ namespace graph {
             return this.vertex.GetHashCode();
         }
 
+        /// Create a list of Vertices from the path.
         public List<Vertex> ToList() {
             List<Vertex> res = new List<Vertex>();
             Path current = this;

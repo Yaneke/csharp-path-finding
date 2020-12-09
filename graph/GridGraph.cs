@@ -3,14 +3,14 @@ using System;
 
 namespace graph {
     public class GridGraph : Graph {
-        private List<List<Vertex>> vertexGrid;
-        private Dictionary<Vertex, Tuple<int, int>> vertexPosition;
+        private List<List<GridVertex>> vertexGrid;
+        private Dictionary<GridVertex, Tuple<int, int>> vertexPosition;
         public int ColCount { get; set; }
         public int RowCount { get; set; }
 
         public GridGraph(string fileName) : base() {
-            this.vertexGrid = new List<List<Vertex>>();
-            vertexPosition = new Dictionary<Vertex, Tuple<int, int>>();
+            this.vertexGrid = new List<List<GridVertex>>();
+            vertexPosition = new Dictionary<GridVertex, Tuple<int, int>>();
 
             string[] lines = System.IO.File.ReadAllLines(fileName);
             this.RowCount = int.Parse(lines[1].Split(" ")[1]);
@@ -18,11 +18,11 @@ namespace graph {
             for (int i = 0; i < lines.Length; i++) {
                 // Skip the four first lines that contain meta data
                 if (i >= 4) {
-                    List<Vertex> rowVertices = new List<Vertex>();
+                    List<GridVertex> rowVertices = new List<GridVertex>();
                     string line = lines[i];
                     for (int j = 0; j < line.Length; j++) {
                         if (line[j] == '.') {
-                            rowVertices.Add(new Vertex((i - 4) + ", " + j));
+                            rowVertices.Add(new GridVertex(i - 4, j));
                         } else {
                             rowVertices.Add(null);
                         }
@@ -61,22 +61,29 @@ namespace graph {
         }
 
         public Tuple<int, int> GetVertexPos(Vertex v) {
-            if (vertexPosition.ContainsKey(v)) {
-                return this.vertexPosition[v];
+            if (v is GridVertex) {
+                GridVertex gridVertex = (GridVertex)v;
+                if (vertexPosition.ContainsKey(gridVertex)) {
+                    return this.vertexPosition[gridVertex];
+                }
             }
             return null;
         }
 
         /// Compute the heuristic cost from n1 to n2 (manhattan distance).
         public override float HCost(Vertex source, Vertex destination) {
-            var ijSource = this.vertexPosition[source];
-            var ijDestination = this.vertexPosition[destination];
-            return Math.Abs(ijDestination.Item1 - ijSource.Item1) + Math.Abs(ijDestination.Item2 - ijSource.Item2);
+            if (source is GridVertex && destination is GridVertex) {
+                return search.Heuristics.ManhattanDistance((GridVertex)source, (GridVertex)destination);
+            }
+            return 0;
         }
 
         public void Add(Vertex v, int i, int j) {
+            if (!(v is (GridVertex))) {
+                throw new Exception("Should be a GridVertex in a GridGraph");
+            }
             base.Add(v);
-            this.vertexPosition.Add(v, new Tuple<int, int>(i, j));
+            this.vertexPosition.Add((GridVertex)v, new Tuple<int, int>(i, j));
         }
 
 

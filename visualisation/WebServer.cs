@@ -26,9 +26,13 @@ namespace visualisation {
             // While a user hasn't visited the `shutdown` url, keep on handling requests
             while (this.runServer) {
                 // Will wait here until we hear from a connection
-                HttpListenerContext ctx = listener.GetContext();
+                HttpListenerContext ctx = this.listener.GetContext();
+                string log = "[" + ctx.Request.HttpMethod + "] " + ctx.Request.Url.AbsolutePath;
+                Console.WriteLine(log);
                 this.dispatch(ctx.Request, ctx.Response);
                 ctx.Response.OutputStream.Close();
+                log = "\t-> " + ctx.Response.StatusCode + " " + ctx.Response.ContentType + " (" + ctx.Response.ContentLength64 + " bytes)";
+                Console.WriteLine(log);
             }
         }
 
@@ -73,19 +77,24 @@ namespace visualisation {
             this.map = new GridGraph(fileName);
         }
 
-        private void GetPath(HttpListenerRequest req, HttpListenerResponse resp) {
-            int xPathStart = int.Parse(req.QueryString["pathStart[x]"]);
-            int yPathStart = int.Parse(req.QueryString["pathStart[y]"]);
-            int xPathEnd = int.Parse(req.QueryString["pathEnd[x]"]);
-            int yPathEnd = int.Parse(req.QueryString["pathEnd[y]"]);
-            Vertex source = this.map.GetVertexAt(yPathStart, xPathStart);
-            Vertex destination = this.map.GetVertexAt(yPathEnd, xPathEnd);
+        private string ReadPostData(HttpListenerRequest req) {
+            using (StreamReader reader = new StreamReader(req.InputStream, req.ContentEncoding)) {
+                return reader.ReadToEnd();
+            }
+        }
+
+        private void ComputePath(HttpListenerRequest req, HttpListenerResponse resp) {
+            string data = ReadPostData(req);
+            data_objects.PathRequest pathRequest = JsonSerializer.Deserialize<data_objects.PathRequest>(data);
+            Vertex source = this.map.GetVertexAt(pathRequest.start.y, pathRequest.start.x);
+            Vertex destination = this.map.GetVertexAt(pathRequest.end.y, pathRequest.end.x);
             graph.Path path = Astar.ShortestPath(this.map, source, destination);
-            Dictionary<Vertex, Vertex> sourceDestinations = new Dictionary<Vertex, Vertex>();
-            sourceDestinations.Add(source, destination);
-            MAPF.CBS(this.map, sourceDestinations);
-            resp.ContentType = "text/json";
-            resp.OutputStream.Write(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(path.ToList())));
+            data_objects.Path pathDTO = new data_objects.Path(path);
+            resp.ContentType = "text/plain";
+            byte[] responseData = JsonSerializer.SerializeToUtf8Bytes(pathDTO);
+            resp.ContentLength64 = responseData.LongLength;
+            resp.ContentEncoding = Encoding.UTF8;
+            resp.OutputStream.Write(responseData);
         }
 
         private void dispatch(HttpListenerRequest req, HttpListenerResponse resp) {
@@ -98,9 +107,6 @@ namespace visualisation {
                         case "/getSelectedMap":
                             this.GetSelectedMap(req, resp);
                             break;
-                        case "/getPath":
-                            this.GetPath(req, resp);
-                            break;
                         default:
                             this.ServeFile(req.Url.AbsolutePath, resp);
                             break;
@@ -111,6 +117,9 @@ namespace visualisation {
                         case "/shutdown":
                             this.runServer = false;
                             this.ServeFile("/", resp);
+                            break;
+                        case "/computePath":
+                            this.ComputePath(req, resp);
                             break;
                         default:
                             break;
