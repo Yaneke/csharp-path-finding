@@ -1,52 +1,90 @@
 <html lang="english">
 
 <head>
-    <meta charset="UTF-8" />
-    <meta title="AStar visualisation" />
+    <meta charset="UTF-8">
+    <meta title="AStar visualisation">
+    <link rel="stylesheet" href="css/bootstrap.min.css">
     <title>A* visualisation</title>
 </head>
 
 <body>
-    <div style="display: flex;">
-        <div style="flex: 1;">
-            <h2>The map</h2>
-            <p>
-                <label for="scaleField">Scale</label>
-                <input id="scaleField" type="text" value="1" />
-                <label>Mouse position</label>
-                x = <input id="xMousePos" type="text" size="3" /> y = <input id="yMousePos" type="text" size="3" />
-                <br />
-            </p>
-            <p>
-            <form>
-                Choose the map:
-                <select name="selectedMap" id="mapselect"></select>
-                <input id="loadButton" type="button" value="Load" />
-            </form>
-            </p>
-            <canvas id="canvas" style="border: solid; border-width: 1px;">
 
-            </canvas>
-
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark static-top">
+        <div class="container">
+            <a class="navbar-brand" href="#">Start Bootstrap</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive"
+                aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarResponsive">
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item active">
+                        <a class="nav-link" href="#">Home
+                            <span class="sr-only">(current)</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">About</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Services</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Contact</a>
+                    </li>
+                </ul>
+            </div>
         </div>
+    </nav>
 
-        <div style="flex: 1;">
-            <h2> The path </h2>
-            <label>Path start: </label>
-            x = <input id="xPathStart" type="text" size="3" /> y = <input id="yPathStart" type="text" size="3" /> <br />
-            <label>Path end: </label>
-            x = <input id="xPathEnd" type="text" size="3" /> y = <input id="yPathEnd" type="text" size="3" /> <br />
-            <input id="getPathButton" type="button" value="Compute path" /> ,<br />
-            <textarea id="pathResult" cols="30" rows="10"></textarea> <br />
+    <!-- Page Content -->
+    <div class="container-fluid">
+        <div class="row mt-2 mb-2">
+            <div class="col-8">
+                <h2>The map</h2>
+                <p>
+                    <label for="scaleField">Scale</label>
+                    <input id="scaleField" type="text" value="1" />
+                    <label>Mouse position</label>
+                    x = <input id="xMousePos" type="text" size="3" /> y = <input id="yMousePos" type="text" size="3" />
+                    <br />
+                </p>
+                <p>
+                <form>
+                    Choose the map:
+                    <select name="selectedMap" id="mapselect"></select>
+                    <input id="loadButton" type="button" value="Load" />
+                </form>
+                </p>
+                <canvas id="canvas" style="border: solid; border-width: 1px;">
+
+                </canvas>
+            </div>
+            <div class="col-3">
+                <div style="flex: 1;">
+                    <h2> The path </h2>
+                    <label>Path start: </label>
+                    x = <input id="xPathStart" type="text" size="3" /> y = <input id="yPathStart" type="text"
+                        size="3" /> <br />
+                    <label>Path end: </label>
+                    x = <input id="xPathEnd" type="text" size="3" /> y = <input id="yPathEnd" type="text" size="3" />
+                    <br />
+                    <input id="getPathButton" type="button" value="Compute path" /> ,<br />
+                    <textarea id="pathResult" cols="30" rows="10"></textarea> <br />
+                </div>
+            </div>
         </div>
     </div>
+    </div>
 
-    <form method="post" action="shutdown">
-        <input type="submit" value="Shutdown">
-    </form>
+
+    <div style="display: flex;">
+
 </body>
-<script type="text/javascript" src="scripts/data_types.js"></script>
 <script type="text/javascript" src="scripts/jquery.js"></script>
+<script type="text/javascript" src="scripts/bootstrap.bundle.min.js"></script>
+<script type="text/javascript" src="scripts/data_types.js"></script>
 <script type="text/javascript" src="scripts/map.js"></script>
 
 </html>

@@ -29,10 +29,15 @@ namespace visualisation {
                 HttpListenerContext ctx = this.listener.GetContext();
                 string log = "[" + ctx.Request.HttpMethod + "] " + ctx.Request.Url.AbsolutePath;
                 Console.WriteLine(log);
-                this.dispatch(ctx.Request, ctx.Response);
-                ctx.Response.OutputStream.Close();
-                log = "\t-> " + ctx.Response.StatusCode + " " + ctx.Response.ContentType + " (" + ctx.Response.ContentLength64 + " bytes)";
-                Console.WriteLine(log);
+                try {
+                    this.dispatch(ctx.Request, ctx.Response);
+                    ctx.Response.OutputStream.Close();
+                    log = "\t-> " + ctx.Response.StatusCode + " " + ctx.Response.ContentType + " (" + ctx.Response.ContentLength64 + " bytes)";
+                    Console.WriteLine(log);
+                }
+                catch (System.Net.HttpListenerException) {
+                    Console.WriteLine("\t-> Error: Broken pipe...");
+                }
             }
         }
 
@@ -47,8 +52,13 @@ namespace visualisation {
             catch (System.IO.FileNotFoundException) {
                 data = File.ReadAllBytes("html/404.html");
             }
+            catch (DirectoryNotFoundException) {
+                data = File.ReadAllBytes("html/404.html");
+            }
             if (path.EndsWith(".js")) {
                 resp.ContentType = "text/javascript";
+            } else if (path.EndsWith(".css")) {
+                resp.ContentType = "text/css";
             } else {
                 resp.ContentType = "text/html";
             }
