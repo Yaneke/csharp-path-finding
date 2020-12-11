@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta title="AStar visualisation">
     <link rel="stylesheet" href="css/bootstrap.min.css">
-    <title>A* visualisation</title>
+    <title>Pathfinding</title>
 </head>
 
 <body>
@@ -62,17 +62,19 @@
                 </canvas>
             </div>
             <div class="col-3">
-                <div style="flex: 1;">
-                    <h2> The path </h2>
+                <h2> The path </h2>
+                <div class="mb-1">
                     <label>Path start: </label>
                     x = <input id="xPathStart" type="text" size="3" /> y = <input id="yPathStart" type="text"
-                        size="3" /> <br />
+                        size="3" />
+                    <br />
                     <label>Path end: </label>
                     x = <input id="xPathEnd" type="text" size="3" /> y = <input id="yPathEnd" type="text" size="3" />
                     <br />
-                    <input id="getPathButton" type="button" value="Compute path" /> ,<br />
-                    <textarea id="pathResult" cols="30" rows="10"></textarea> <br />
+                    <input id="getPathButton" class="btn btn-primary" type="button" value="Compute path" />
+                    <br />
                 </div>
+                <textarea id="pathResult" cols="30" rows="10" readonly></textarea> <br />
             </div>
         </div>
     </div>

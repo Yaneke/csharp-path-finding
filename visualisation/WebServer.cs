@@ -50,9 +50,11 @@ namespace visualisation {
                 data = File.ReadAllBytes("html/" + path);
             }
             catch (System.IO.FileNotFoundException) {
+                resp.StatusCode = (int)HttpStatusCode.NotFound;
                 data = File.ReadAllBytes("html/404.html");
             }
             catch (DirectoryNotFoundException) {
+                resp.StatusCode = (int)HttpStatusCode.NotFound;
                 data = File.ReadAllBytes("html/404.html");
             }
             if (path.EndsWith(".js")) {
@@ -79,7 +81,6 @@ namespace visualisation {
             resp.OutputStream.Write(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(fileNames)));
         }
 
-
         private void GetSelectedMap(HttpListenerRequest req, HttpListenerResponse resp) {
             resp.ContentType = "text/plain";
             string fileName = "data/" + req.QueryString["map"];
@@ -93,18 +94,27 @@ namespace visualisation {
             }
         }
 
-        private void ComputePath(HttpListenerRequest req, HttpListenerResponse resp) {
-            string data = ReadPostData(req);
-            data_objects.PathRequest pathRequest = JsonSerializer.Deserialize<data_objects.PathRequest>(data);
-            Vertex source = this.map.GetVertexAt(pathRequest.start.y, pathRequest.start.x);
-            Vertex destination = this.map.GetVertexAt(pathRequest.end.y, pathRequest.end.x);
-            graph.Path path = Astar.ShortestPath(this.map, source, destination);
-            data_objects.Path pathDTO = new data_objects.Path(path);
-            resp.ContentType = "text/plain";
-            byte[] responseData = JsonSerializer.SerializeToUtf8Bytes(pathDTO);
-            resp.ContentLength64 = responseData.LongLength;
-            resp.ContentEncoding = Encoding.UTF8;
-            resp.OutputStream.Write(responseData);
+        private void ComputePaths(HttpListenerRequest req, HttpListenerResponse resp) {
+            try {
+                string data = ReadPostData(req);
+                List<data_objects.PathRequestDO> pathRequests = JsonSerializer.Deserialize<List<data_objects.PathRequestDO>>(data);
+                foreach (var pathRequest in pathRequests) {
+                    Vertex source = this.map.GetVertexAt(pathRequest.start.y, pathRequest.start.x);
+                    Vertex destination = this.map.GetVertexAt(pathRequest.end.y, pathRequest.end.x);
+                    graph.Path path = Astar.ShortestPath(this.map, source, destination);
+                    data_objects.PathDO pathDTO = new data_objects.PathDO(path);
+                    resp.ContentType = "text/plain";
+                    byte[] responseData = JsonSerializer.SerializeToUtf8Bytes(pathDTO);
+                    resp.ContentLength64 = responseData.LongLength;
+                    resp.ContentEncoding = Encoding.UTF8;
+                    resp.OutputStream.Write(responseData);
+                    break;
+                }
+            }
+            catch (System.Text.Json.JsonException) {
+                resp.StatusCode = (int)HttpStatusCode.BadRequest;
+            }
+
         }
 
         private void dispatch(HttpListenerRequest req, HttpListenerResponse resp) {
@@ -124,12 +134,8 @@ namespace visualisation {
                     break;
                 case "POST":
                     switch (req.Url.AbsolutePath) {
-                        case "/shutdown":
-                            this.runServer = false;
-                            this.ServeFile("/", resp);
-                            break;
-                        case "/computePath":
-                            this.ComputePath(req, resp);
+                        case "/computePaths":
+                            this.ComputePaths(req, resp);
                             break;
                         default:
                             break;

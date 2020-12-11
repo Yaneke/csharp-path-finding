@@ -20,6 +20,15 @@ namespace graph {
             return this.edges;
         }
 
+        public Edge GetEdgeTo(Vertex neighbour) {
+            foreach (var edge in this.edges) {
+                if (edge.neighbour.Equals(neighbour)) {
+                    return edge;
+                }
+            }
+            return null;
+        }
+
         public override string ToString() {
             return this.id;
         }

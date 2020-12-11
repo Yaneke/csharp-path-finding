@@ -1,9 +1,9 @@
 
 
 namespace visualisation.data_objects {
-    class PathRequest {
-        public Coordinate start { get; set; }
-        public Coordinate end { get; set; }
+    class PathRequestDO {
+        public CoordinateDO start { get; set; }
+        public CoordinateDO end { get; set; }
 
         public override string ToString() {
             return "start: " + this.start.ToString() + ", end = " + this.end.ToString();

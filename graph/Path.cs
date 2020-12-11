@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
+using search;
 
 namespace graph {
     public class Path : IComparable<Path> {
-        public Path parent;
+        public List<Vertex> vertexPath { get; }
+        public List<Edge> edgePath { get; }
         public Vertex vertex;
         public int length { get; }
         private float gCost;
@@ -16,26 +18,22 @@ namespace graph {
 
         /// <summary> Create a Path from the source. <summary>
         public Path(Vertex source) {
-            this.parent = null;
+            this.vertexPath = new List<Vertex>();
+            this.vertexPath.Add(source);
+            this.edgePath = new List<Edge>();
             this.gCost = 0f;
             this.hCost = 0f;
             this.length = 0;
             this.vertex = source;
         }
 
-        /// <summary> Build a NodePath with a parent. </summary>
-        public Path(Vertex vertex, Path parent, float hCost, float edgeCost) {
-            this.vertex = vertex;
-            this.parent = parent;
-            this.gCost = parent.gCost + edgeCost;
-            this.hCost = hCost;
-            this.length = parent.length + 1;
-        }
-
         /// <summary> Build a NodePath from an edge. </summary>
         public Path(Path parent, Edge edge, float hCost) {
             this.vertex = edge.neighbour;
-            this.parent = parent;
+            this.vertexPath = new List<Vertex>(parent.vertexPath);
+            this.vertexPath.Add(edge.neighbour);
+            this.edgePath = new List<Edge>(parent.edgePath);
+            this.edgePath.Add(edge);
             this.gCost = parent.gCost + edge.cost;
             this.hCost = hCost;
             this.length = parent.length + 1;
@@ -66,15 +64,8 @@ namespace graph {
             return this.vertex.GetHashCode();
         }
 
-        /// Create a list of Vertices from the path.
-        public List<Vertex> ToList() {
-            List<Vertex> res = new List<Vertex>();
-            Path current = this;
-            while (current != null) {
-                res.Insert(0, current.vertex);
-                current = current.parent;
-            }
-            return res;
+        public Constraint ToConstraint() {
+            return new Constraint(this.vertex, this.length);
         }
 
         public override bool Equals(object obj) {
@@ -89,11 +80,7 @@ namespace graph {
         }
 
         public override string ToString() {
-            // if (this.parent == null) {
-            //     return this.vertex.ToString();
-            // }
-            // return this.parent.ToString() + "->" + this.vertex.ToString();
-            return this.vertex.ToString();
+            return this.vertexPath.ToString();
         }
 
 

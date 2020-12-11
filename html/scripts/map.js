@@ -47,13 +47,15 @@ $(document).ready(function () {
 
     $("#getPathButton").on("click", function () {
         //$.get("/getPath", { pathStart: pathStart, pathEnd: pathEnd }, drawPath);
-        var data = new PathRequest(pathStart, pathEnd);
+        var data = [new PathRequest(pathStart, pathEnd)];
         $.ajax({
-            url: "/computePath",
+            url: "/computePaths",
             method: "post",
             data: JSON.stringify(data),
             success: function (res) {
-                drawPath(JSON.parse(res));
+                res = JSON.parse(res);
+                console.log(res);
+                drawPath(res);
             },
             error: function (msg) {
                 console.log(msg);
