@@ -4,40 +4,51 @@
     <meta charset="UTF-8" />
     <meta title="AStar visualisation" />
     <title>A* visualisation</title>
+    <link rel="stylesheet" href="styles/jquery-ui.min.css">
+    <script type="text/javascript" src="scripts/jquery.js"></script>
+    <script type="text/javascript" src="scripts/jquery-ui.min.js"></script>
+    <script type="text/javascript" src="scripts/map.js"></script>
 </head>
 
-<body>
-    <div style="display: flex;">
-        <div style="flex: 1;">
+<body style="height: 100%; overflow-x: hidden;">
+    <div class="wrapper"
+        style="display: table; table-layout: fixed; position: absolute; width: 100%; height: 100%; top: 0px; left: 0px">
+        <div class="map pane"
+            style="display: table-cell; padding: 5px; width: 50%; background-color: lightcyan; border: solid; border-width: 0px; border-right-width: 1px">
             <h2>The map</h2>
-            <p>
-                <label for="scaleField">Scale</label>
-                <input id="scaleField" type="text" value="1" />
+            <div class="controlgroup" style="width: 100%; border: solid; border-width: 1px; padding: 3px;">
+                <label id="scaleLabel" for="scaleField">Scale: 1</label>
+                <div class="slider" id="scaleField" style="width: 95%"></div>
                 <label>Mouse position</label>
                 x = <input id="xMousePos" type="text" size="3" /> y = <input id="yMousePos" type="text" size="3" />
                 <br />
-            </p>
-            <p>
-            <form>
-                Choose the map:
-                <select name="selectedMap" id="mapselect"></select>
-                <input id="loadButton" type="button" value="Load" />
-            </form>
-            </p>
-            <canvas id="canvas" style="border: solid; border-width: 1px;">
+                <p>
+                <form>
+                    Select map:
+                    <select name="selectedMap" id="mapselect"></select>
+                    <input id="loadButton" type="button" value="Load" />
+                </form>
+                </p>
+            </div>
+            <canvas id="canvas" style="background-color: white; width: 100%; border: solid; border-width: 1px;">
 
             </canvas>
 
         </div>
 
-        <div style="flex: 1;">
+        <div class="path pane"
+            style="display: table-cell; padding: 5px; width: 50%; background-color: ivory; border: solid; border-width: 0px; border-left-width: 1px;">
             <h2> The path </h2>
-            <label>Path start: </label>
-            x = <input id="xPathStart" type="text" size="3" /> y = <input id="yPathStart" type="text" size="3" /> <br />
-            <label>Path end: </label>
-            x = <input id="xPathEnd" type="text" size="3" /> y = <input id="yPathEnd" type="text" size="3" /> <br />
-            <input id="getPathButton" type="button" value="Compute path" /> ,<br />
-            <textarea id="pathResult" cols="30" rows="10"></textarea> <br />
+            <div class="controlgroup" style="width: 100%; border: solid; border-width: 1px; padding: 3px;">
+                <label>Path start: </label>
+                x = <input id="xPathStart" type="text" size="3" /> y = <input id="yPathStart" type="text" size="3" />
+                <br />
+                <label>Path end: </label>
+                x = <input id="xPathEnd" type="text" size="3" /> y = <input id="yPathEnd" type="text" size="3" />
+                <input id="getPathButton" type="button" value="Compute path" /><br />
+            </div>
+            <textarea id="pathResult" cols="30" rows="10"
+                style="width: 100%; border: solid; border-width: 1px;"></textarea> <br />
         </div>
     </div>
 
@@ -46,7 +57,46 @@
     </form>
 </body>
 
-<script type="text/javascript" src="scripts/jquery.js"></script>
-<script type="text/javascript" src="scripts/map.js"></script>
+<script>
+    $(function () {
+        $(".map.pane").resizable({
+            handles: "e, w",
+            stop: function (event, ui) {
+                setWidthInPercent(ui.element);
+            }
+
+        });
+        $(".path.pane").resizable({
+            handles: "e, w",
+            resize: function (event, ui) {
+                ui.position.left = 0;
+            },
+            stop: function (event, ui) {
+                setWidthInPercent(ui.element);
+            }
+        });
+        $(".slider").slider({
+            min: 1,
+            max: 10,
+            step: 1,
+            value: 1,
+            animate: "fast",
+            change: function(event, ui) {
+                document.getElementById("scaleLabel").innerHTML = ("Scale: " + ui.value);
+            }
+        });
+        window.addEventListener("resize", function() {
+            resizeCanvas();
+            reDrawMap();
+        });
+    });
+    function setWidthInPercent(element) {
+        var percentageWidth = (element.width() / element.parent().width()) * 100;
+        element.width(percentageWidth + '%');
+        console.log("Width set for" + element);
+        resizeCanvas();
+        reDrawMap();
+    }
+</script>
 
 </html>
