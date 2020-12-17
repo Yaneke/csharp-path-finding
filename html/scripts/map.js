@@ -4,39 +4,50 @@ var canvas = null;
 var context = null;
 var mapselect = null;
 
-var canvasBaseScale = null // canvas pixels per map cell (at map scale 1)
-var mapScale = null; // 1 = show whole map in canvas ... 10 = show min(2 cells, map.width) in canvas ?
-
-var mousePos = {
-    x: NaN,
-    y: NaN
-};
-var pathStart = {
-    x: NaN,
-    y: NaN
-};
-var pathEnd = {
-    x: NaN,
-    y: NaN
-};
-var dragStart = {
-    x: NaN,
-    y: NaN
-};
 var map = {
     width: 0,
     height: 0,
     data: null
 };
 
-var cntrlIsPressed, dragZoomMode, addPathMode, mouseMoved, mapWasDragged;
-var mouseDownIntervalID = NaN;
+// MAP METADATA
+var zoomLevel = null; // 1 = show whole map in canvas ... 20 = show single cell
+const zoomMin = 1, zoomMax = 20;
 
-$(document).ready(function () {
-    $("canvas").on("resize", function () {
-        console.log("Canvas resized");
-    });
-});
+function resetZoom() {
+    zoomLevel = zoomMin;
+    $("#zoomSlider").slider("value", zoomMin);
+}
+
+
+var mousePos, mousePosRaw, pathStart, pathEnd, dragStart;
+function resetMeta() {
+    $("#xPathStart").val("");
+    $("#yPathStart").val("");
+    $("#xPathEnd").val("");
+    $("#yPathEnd").val("");
+
+    function coordNaN() { return  {x: NaN, y: NaN} };
+    mousePos = coordNaN();
+    mousePosRaw = coordNaN();
+    pathStart = coordNaN();
+    pathEnd = coordNaN();
+    dragStart = coordNaN();
+    resetZoom();
+}
+
+// MAP MODES
+var cntrlIsPressed = false;
+var dragZoomMode, addPathMode, mouseMoved, mapWasDragged;
+var dragMapIntervalID, drawPathIntervalID;
+function resetMode() {
+    dragZoomMode = false;
+    addPathMode = false;
+    mouseMoved = false;
+    mapWasDragged = false;
+    clearInterval(dragMapIntervalID);
+    clearInterval(drawPathIntervalID);
+}
 
 window.onload = function () {
     canvas = $("#canvas");
@@ -44,7 +55,9 @@ window.onload = function () {
     trackTransforms(context);
 
     mapselect = $("#mapselect");
-    mapScale = 1;
+
+    resetMeta();
+    resetMode();
 
     $("#xPathStart").on("change", function () {
         pathStart.x = $(this).val();
@@ -58,14 +71,6 @@ window.onload = function () {
     $("#yPathEnd").on("change", function () {
         pathEnd.y = $(this).val();
     });
-
-    // TODO use zoom function
-    // $("#scaleField").on("change", function () {
-    //     scale = canvas[0].width / (map.width * 1.0 / $(this).val())
-    //     console.log(scale);
-    //     map.imageData = null; // forces re-draw
-    //     reDrawMap();
-    // });
 
     mapselect.on("change", function () {
         loadMap(drawMap);
@@ -82,15 +87,6 @@ window.onload = function () {
     });
 
     // --- KEY & MOUSE BINDINGS ---
-
-    cntrlIsPressed = false; // determines if mousedown enters dragZoom or addPath mode
-    function resetMode() {
-        dragZoomMode = false;
-        addPathMode = false;
-        mouseMoved = false;
-        mapWasDragged = false;
-    }
-    resetMode();
 
     // Cntrl key down: mousedown will enter drag/zoom mode 
     $(document).on("keydown", function (event) {
@@ -116,8 +112,8 @@ window.onload = function () {
             // Moving the mouse will drag, releasing it without moving will zoom (dezoom if shift is pressed)
             console.log("Cntrl+mousedown: enter dragZoomMode");
             dragZoomMode = true;
-            dragStart = { x: mousePos.x, y: mousePos.y };
-            mouseDownIntervalID = setInterval(whileDraggingMap, 50);
+            dragStart = { x: mousePosRaw.x, y: mousePosRaw.y };
+            dragMapIntervalID = setInterval(whileDraggingMap, 50);
         } else {
             // Start drawing a line from start point to the current mouse position.
             console.log("mousedown: enter addPathMode")
@@ -126,7 +122,7 @@ window.onload = function () {
             pathStart = {x: mousePos.x, y: mousePos.y};
             $("#xPathStart").val(pathStart.x);
             $("#yPathStart").val(pathStart.y);
-            mouseDownIntervalID = setInterval(whileAddingPath, 100);
+            drawPathIntervalID = setInterval(whileAddingPath, 100);
         }
     });
 
@@ -136,8 +132,8 @@ window.onload = function () {
     });
 
     canvas.on("mouseup", function (event) {
-        clearInterval(mouseDownIntervalID);
         if (dragZoomMode) {
+            clearInterval(dragMapIntervalID);
             if (mapWasDragged || mouseMoved) {
                 whileDraggingMap();
             } else {
@@ -146,8 +142,8 @@ window.onload = function () {
             console.log("Cntrl+mouseup: exit dragZoomMode");
         }
         if (addPathMode) {
-            // Draw one final line
-            mouseMoved = true; // forces to draw last line
+            clearInterval(drawPathIntervalID);
+            mouseMoved = true; // forces to draw last line (in case mouse moved but interval did not trigger)
             whileAddingPath();
             pathEnd.x = mousePos.x;
             pathEnd.y = mousePos.y;
@@ -159,13 +155,11 @@ window.onload = function () {
     });
 
     canvas.on("mouseout", function () {
-        clearInterval(mouseDownIntervalID);
         resetMode();
     });
 
     // Make sure mouseup event ends dragging/zooming/adding path even if it happens out of canvas
     $(document).on("mouseup"), function () {
-        clearInterval(mouseDownIntervalID);
         resetMode();
     }
 };
@@ -181,6 +175,9 @@ function updateMousePos(event) {
     // Inverts the current context transform to account for scale, translation, rotation
     var trans = context.transformedPoint(lastX, lastY);
 
+    mousePosRaw.x = trans.x;
+    mousePosRaw.y = trans.y;
+    
     mousePos.x = Math.min(Math.max(0, Math.floor(trans.x)), map.width - 1);
     mousePos.y = Math.min(Math.max(0, Math.floor(trans.y)), map.height - 1);
     $("#xMousePos").val(mousePos.x);
@@ -201,7 +198,7 @@ function whileDraggingMap() {
         mouseMoved = false;
         mapWasDragged = true;
         console.log("Dragged map.");
-        translateMap();
+        translateMapFromTo();
     }
 }
 
@@ -218,65 +215,89 @@ function loadMap(callback) {
     $.get("/getSelectedMap", {
         map: $("#mapselect option:selected").text()
     }, function (result) {
+        resetMeta();
         var lines = result.split("\n");
         map.width = lines[2].split(" ")[1];
         map.height = lines[1].split(" ")[1];
         map.data = lines.slice(4, lines.length);
-        
-        pathStart = {x: NaN, y: NaN};
-        pathEnd = {x: NaN, y: NaN};
 
         resizeCanvas(true);
         callback()
     });
 }
 
-function resizeCanvas(resetTransform = true) {
-    var transform;
+function resizeCanvas(resetTransform = false) {
+    var prevCenter, prevZoom;
     if (!resetTransform) {
-        // TODO fix so that current transform is only adjusted by newScale
-        // once fixed change default to resetTransform = false
-        const newScale = canvas.innerWidth() * 1.0 / canvas[0].width;
-        context.scale(newScale, newScale);
-        transform = context.getTransform(); // this gives only NaN for some reason
+        prevCenter = context.transformedPoint(canvas[0].width / 2, canvas[0].height / 2);
+        prevZoom = zoomLevel;
     }
+
+    resetZoom();
+
     context.setTransform(1, 0, 0, 1, 0, 0);
     canvas.prop("width", canvas.innerWidth()); // maximize width to use all available pixels
-    canvasBaseScale = canvas[0].width * 1.0 / map.width;
+    var canvasBaseScale = canvas[0].width * 1.0 / map.width;
     canvas.prop("height", map.height * canvasBaseScale); // adjust height to maintain aspect ratio
     context.scale(canvasBaseScale, canvasBaseScale);
 
     if (!resetTransform) {
-        context.transform(transform);
+        // translateMap({x: 0, y: 0}, prevCenter); // TODO centering is a bit off
+        zoomMapTo(prevZoom, prevCenter);
     }
 };
 
 // ----- MAP ZOOM & TRANSLATE -----
 
-function translateMap() {
+function translateBounded(trans) {
     var topLeftBound = context.transformedPoint(0, 0);
     var botRightBound = context.transformedPoint(canvas[0].width, canvas[0].height);
-    var diff = {x: mousePos.x - dragStart.x, y: mousePos.y - dragStart.y};
-    var diffBound = {
+    var transBound = {
         xPos: topLeftBound.x, 
         yPos: topLeftBound.y, 
         xNeg: map.width - botRightBound.x,
         yNeg: map.height - botRightBound.y
     }
-    var transX = diff.x < 0 ? - Math.min(diffBound.xNeg, -diff.x) : Math.min(diffBound.xPos, diff.x);
-    var transY = diff.y < 0 ? - Math.min(diffBound.yNeg, -diff.y) : Math.min(diffBound.yPos, diff.y);
-    context.translate(transX, transY);
-    drawMap();
+    var boundedX = trans.x < 0 ? - Math.min(transBound.xNeg, -trans.x) : Math.min(transBound.xPos, trans.x);
+    var boundedY = trans.y < 0 ? - Math.min(transBound.yNeg, -trans.y) : Math.min(transBound.yPos, trans.y);
+    return {x: boundedX, y: boundedY};
 }
 
-function zoomMap(clicks) {
-    var scaleFactor = 1.1;
-    console.log("Zoomed " + clicks + " times");
-    context.translate(mousePos.x, mousePos.y);
-    var factor = Math.pow(scaleFactor, clicks);
+function translateMap(trans) {
+    translateMapFromTo({x: 0, y: 0}, trans);
+}
+
+function translateMapFromTo(from = dragStart, to = mousePosRaw) {
+    var diff = {x: to.x - from.x, y: to.y - from.y};
+    var trans = translateBounded(diff);
+    
+    context.translate(trans.x, trans.y);
+
+    // prevents scaling from putting map out of bouds
+    var topLeft = context.transformedPoint(0, 0);
+    context.translate(Math.min(topLeft.x, 0), Math.min(topLeft.y, 0));
+    drawMap(); // TODO use callback instead ?
+}
+
+function zoomMapTo(value, center = context.transformedPoint(canvas[0].width/2, canvas[0].height/2)) {
+    zoomMap(value - zoomLevel, center)
+}
+
+function zoomMap(diff, center = mousePosRaw) {
+    var newLevel = (diff > 0) ? Math.min(zoomLevel+diff, zoomMax) : Math.max(zoomLevel+diff, zoomMin);
+    var trueDiff = newLevel - zoomLevel;
+    
+    zoomLevel = newLevel;
+    $("#zoomSlider").slider("value", zoomLevel);
+    
+    var scaleFactor = Math.pow(map.width, 1.0/(zoomMax-zoomMin));
+    var factor = Math.pow(scaleFactor, trueDiff);
+    
+    context.translate(center.x, center.y); // resets origin so that it scales from center
     context.scale(factor, factor);
-    context.translate(-mousePos.x, -mousePos.y);
-    drawMap();
+    translateMap({x: -center.x, y: -center.y}); // takes care of re-drawing map
+    
+    console.log("Zoomed " + trueDiff + " times, current zoom: " + zoomLevel);
 }
 
 // ----- MAP DRAWING -----
@@ -317,8 +338,8 @@ function drawArrow() {
     context.lineTo(toX - headlen * Math.cos(angle - Math.PI / 6), toY - headlen * Math.sin(angle - Math.PI / 6));
     context.moveTo(toX, toY);
     context.lineTo(toX - headlen * Math.cos(angle + Math.PI / 6), toY - headlen * Math.sin(angle + Math.PI / 6));
-    context.stroke();
     context.closePath();
+    context.stroke();
 }
 
 function drawPath(path) {

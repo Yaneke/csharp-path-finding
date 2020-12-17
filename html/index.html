@@ -16,9 +16,9 @@
         <div class="map pane"
             style="display: table-cell; padding: 5px; width: 50%; background-color: lightcyan; border: solid; border-width: 0px; border-right-width: 1px">
             <h2>The map</h2>
-            <div class="controlgroup" style="width: 100%; border: solid; border-width: 1px; padding: 3px;">
-                <label id="scaleLabel" for="scaleField">Scale: 1</label>
-                <div class="slider" id="scaleField" style="width: 95%"></div>
+            <div class="controlgroup" data-type="horizontal" style="width: 100%; border: solid; border-width: 1px; padding: 3px;">
+                <label id="zoomLabel" for="zoomSlider">Scale: 1</label>
+                <div class="slider" id="zoomSlider" style="display: inline-flex; width: 100%; margin-right: 10px;"></div>
                 <label>Mouse position</label>
                 x = <input id="xMousePos" type="text" size="3" /> y = <input id="yMousePos" type="text" size="3" />
                 <br />
@@ -76,18 +76,21 @@
             }
         });
         $(".slider").slider({
-            min: 1,
-            max: 10,
+            min: zoomMin,
+            max: zoomMax,
             step: 1,
-            value: 1,
+            value: zoomMin,
             animate: "fast",
+            slide: function(event, ui) {
+                document.getElementById("zoomLabel").innerHTML = ("Scale: " + ui.value);
+                zoomMapTo(ui.value);
+            },
             change: function(event, ui) {
-                document.getElementById("scaleLabel").innerHTML = ("Scale: " + ui.value);
+                document.getElementById("zoomLabel").innerHTML = ("Scale: " + ui.value);
             }
         });
         window.addEventListener("resize", function() {
             resizeCanvas();
-            reDrawMap();
         });
     });
     function setWidthInPercent(element) {
@@ -95,7 +98,7 @@
         element.width(percentageWidth + '%');
         console.log("Width set for" + element);
         resizeCanvas();
-        reDrawMap();
+        drawMap();
     }
 </script>
 
