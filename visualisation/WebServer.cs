@@ -5,13 +5,16 @@ using System.Net;
 using System.Text.Json;
 using System.Collections.Generic;
 using graph;
+using PathPlanning.Example;
 using search;
+using System.Linq;
+using PathPlanning.Common;
 
 namespace visualisation {
     class HttpServer {
         private HttpListener listener;
         private bool runServer;
-        private GridGraph map;
+        private PathPlanning.Example.Graph map;
 
 
         public HttpServer(string url) {
@@ -70,7 +73,7 @@ namespace visualisation {
             resp.ContentType = "text/plain";
             string fileName = "data/" + req.QueryString["map"];
             resp.OutputStream.Write(File.ReadAllBytes(fileName));
-            this.map = new GridGraph(fileName);
+            this.map = Parser.ParseFile(fileName);
         }
 
         private void GetPath(HttpListenerRequest req, HttpListenerResponse resp) {
@@ -78,14 +81,18 @@ namespace visualisation {
             int yPathStart = int.Parse(req.QueryString["pathStart[y]"]);
             int xPathEnd = int.Parse(req.QueryString["pathEnd[x]"]);
             int yPathEnd = int.Parse(req.QueryString["pathEnd[y]"]);
-            Vertex source = this.map.GetVertexAt(yPathStart, xPathStart);
-            Vertex destination = this.map.GetVertexAt(yPathEnd, xPathEnd);
-            graph.Path path = Astar.ShortestPath(this.map, source, destination);
-            Dictionary<Vertex, Vertex> sourceDestinations = new Dictionary<Vertex, Vertex>();
-            sourceDestinations.Add(source, destination);
-            MAPF.CBS(this.map, sourceDestinations);
+            map.AddPawn("P", new Coord(xPathStart, yPathStart), new Coord(xPathEnd, yPathEnd));
+            
+            var tree = new PathPlanning.Search.CBSTree(map);
+            var solution = tree.Search().First();
+            var path = solution.GetPaths("P").First();
+            var pathString = path.Select((IVertex vertex, int _) => {
+                var coord = vertex.GetCoordinates();
+                return coord.Y + ", " + coord.X; // TODO maybe use usual order (X, Y)
+            });
+
             resp.ContentType = "text/json";
-            resp.OutputStream.Write(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(path.ToList())));
+            resp.OutputStream.Write(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(pathString.ToList())));
         }
 
         private void dispatch(HttpListenerRequest req, HttpListenerResponse resp) {

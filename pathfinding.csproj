@@ -16,5 +16,8 @@
   <Reference Include="PathPlanning">
     <HintPath>dll\PathPlanning.dll</HintPath>
   </Reference>
+  <PackageReference Include="OptimizedPriorityQueue" Version="4.2.0">
+    <HintPath>dll\Priority Queue.dll</HintPath>
+  </PackageReference>
 </ItemGroup>
 </Project>
