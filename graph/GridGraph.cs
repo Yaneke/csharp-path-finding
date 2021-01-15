@@ -3,15 +3,14 @@ using System;
 
 namespace graph {
     public class GridGraph : Graph {
-        private List<List<GridVertex>> vertexGrid;
-        private Dictionary<GridVertex, Tuple<int, int>> vertexPosition;
+        private List<List<GridVertex>> grid;
         public int ColCount { get; set; }
         public int RowCount { get; set; }
 
-        public GridGraph(string fileName) : base() {
-            this.vertexGrid = new List<List<GridVertex>>();
-            vertexPosition = new Dictionary<GridVertex, Tuple<int, int>>();
+        public GridGraph(string fileName) : this(fileName, false) { }
 
+        public GridGraph(string fileName, bool withEdgeLoop) : base() {
+            this.grid = new List<List<GridVertex>>();
             string[] lines = System.IO.File.ReadAllLines(fileName);
             this.RowCount = int.Parse(lines[1].Split(" ")[1]);
             this.ColCount = int.Parse(lines[2].Split(" ")[1]);
@@ -27,45 +26,46 @@ namespace graph {
                             rowVertices.Add(null);
                         }
                     }
-                    this.vertexGrid.Add(rowVertices);
+                    this.grid.Add(rowVertices);
                 }
             }
 
             for (int i = 0; i < this.RowCount; i++) {
-                for (int j = 0; j < this.vertexGrid[i].Count; j++) {
-                    Vertex v = this.vertexGrid[i][j];
+                for (int j = 0; j < this.grid[i].Count; j++) {
+                    Vertex v = this.grid[i][j];
                     if (v != null) {
                         this.Add(v, i, j);
+                        if (withEdgeLoop) {
+                            v.AddNeighbour(v, 0);
+                        }
                         if (i > 0) {// north
-                            v.AddNeighbour(this.vertexGrid[i - 1][j], 1);
+                            v.AddNeighbour(this.grid[i - 1][j], 1);
                         }
                         if (j > 0) { // west
-                            v.AddNeighbour(this.vertexGrid[i][j - 1], 1);
+                            v.AddNeighbour(this.grid[i][j - 1], 1);
                         }
                         if (i < this.RowCount - 1) { // south 
-                            v.AddNeighbour(this.vertexGrid[i + 1][j], 1);
+                            v.AddNeighbour(this.grid[i + 1][j], 1);
                         }
                         if (j < this.ColCount - 1) { // east
-                            v.AddNeighbour(this.vertexGrid[i][j + 1], 1);
+                            v.AddNeighbour(this.grid[i][j + 1], 1);
                         }
                     }
                 }
             }
         }
 
-        public Vertex GetVertexAt(int i, int j) {
-            if (i > 0 && i < this.RowCount && j > 0 && j < this.ColCount) {
-                return this.vertexGrid[i][j];
+        public GridVertex GetVertexAt(int i, int j) {
+            if (i >= 0 && i < this.RowCount && j >= 0 && j < this.ColCount) {
+                return this.grid[i][j];
             }
             return null;
         }
 
         public Tuple<int, int> GetVertexPos(Vertex v) {
-            if (v is GridVertex) {
+            if (v is GridVertex && this.Contains(v)) {
                 GridVertex gridVertex = (GridVertex)v;
-                if (vertexPosition.ContainsKey(gridVertex)) {
-                    return this.vertexPosition[gridVertex];
-                }
+                return new Tuple<int, int>(gridVertex.i, gridVertex.j);
             }
             return null;
         }
@@ -83,7 +83,6 @@ namespace graph {
                 throw new Exception("Should be a GridVertex in a GridGraph");
             }
             base.Add(v);
-            this.vertexPosition.Add((GridVertex)v, new Tuple<int, int>(i, j));
         }
 
 
@@ -92,7 +91,7 @@ namespace graph {
             res += "Row Count: " + this.RowCount + "\n";
             for (int i = 0; i < this.ColCount; i++) {
                 for (int j = 0; j < this.RowCount; j++) {
-                    if (this.vertexGrid[i][j] == null) {
+                    if (this.grid[i][j] == null) {
                         res += "@";
                     } else {
                         res += ".";

@@ -1,15 +1,15 @@
 using System.Collections.Generic;
-using game;
 using graph;
+using System;
 
 
 namespace search {
     public class Solution {
-        private Dictionary<Agent, Path> agentsSolutions;
+        private Dictionary<int, Path> agentsPaths;
         public float cost {
             get {
                 float res = 0;
-                foreach (var path in this.agentsSolutions.Values) {
+                foreach (var path in this.agentsPaths.Values) {
                     res += path.cost;
                 }
                 return res;
@@ -17,62 +17,81 @@ namespace search {
         }
 
         public Solution() {
-            this.agentsSolutions = new Dictionary<Agent, Path>();
+            this.agentsPaths = new Dictionary<int, Path>();
         }
 
-        public Path GetPath(Agent agent) {
-            return this.agentsSolutions[agent];
+        public void Add(int agent_num, Path path) {
+            this.agentsPaths.Add(agent_num, path);
+        }
+
+        public Path GetPath(int agent) {
+            return this.agentsPaths[agent];
         }
 
         public bool IsValid() {
-            return false;
+            return this.GetFirstConflict() == null;
         }
 
-        public List<VertexConflict> GetConlicts() {
-            List<VertexConflict> vertexConflitcs = new List<VertexConflict>();
-            List<EdgeConflict> edgeConflicts = new List<EdgeConflict>();
-            int maxLen = 0;
-            foreach (var path in this.agentsSolutions.Values) {
-                if (path.length > maxLen) {
-                    maxLen = path.length;
+        /// <summary>
+        /// Find the first conflict in a solution if any. Returns null if none.
+        /// </summary>
+        /// NB: This is implemented in a rather non-intuitive manner in order to spot 
+        /// conflicts as soon as possible.
+        public Conflict GetFirstConflict() {
+            // Check initial positions
+            Dictionary<Vertex, int> previousVertices = new Dictionary<Vertex, int>();
+            foreach (var entry in this.agentsPaths) {
+                int agent = entry.Key;
+                Path path = entry.Value;
+                if (previousVertices.ContainsKey(path.vertexPath[0])) {
+                    throw new Exception("Agents cannot have the same initial position!");
+                }
+                previousVertices.Add(path.vertexPath[0], agent);
+            }
+            // Check max path length
+            int nsteps = 0;
+            foreach (var path in this.agentsPaths.Values) {
+                if (path.edgePath.Count > nsteps) {
+                    nsteps = path.edgePath.Count;
                 }
             }
-            // For each time step
-            for (int i = 0; i < maxLen; i++) {
-                Dictionary<Vertex, List<Agent>> occupiedVertices = new Dictionary<Vertex, List<Agent>>();
-                Dictionary<Edge, List<Agent>> occupiedEdges = new Dictionary<Edge, List<Agent>>();
+            // For each time step.
+            for (int t = 0; t < nsteps; t++) {
+                Dictionary<Vertex, int> currentVertices = new Dictionary<Vertex, int>();
                 // For each agent
-                foreach (var entry in this.agentsSolutions) {
-                    Agent agent = entry.Key;
+                foreach (var entry in this.agentsPaths) {
+                    int agent = entry.Key;
                     Path path = entry.Value;
-                    // Check for already occupied vertices
-                    if (i < path.vertexPath.Count) {
-                        Vertex vertex = path.vertexPath[i];
-                        if (occupiedVertices.ContainsKey(vertex)) {
-                            foreach (Agent other in occupiedVertices[vertex]) {
-                                vertexConflitcs.Add(new VertexConflict(vertex, i, agent, other));
-                            }
-                        } else {
-                            occupiedVertices.Add(vertex, new List<Agent>());
+                    if (t < path.edgePath.Count) {
+                        Vertex vertex = path.edgePath[t].neighbour;
+                        // If the destination vertex is already occupied at time t+1, then there is a conflict at time t+1.
+                        if (currentVertices.ContainsKey(vertex)) {
+                            return new VertexConflict(vertex, t + 1, agent, currentVertices[vertex]);
                         }
-                        occupiedVertices[vertex].Add(agent);
-                    }
-                    // Check for already occupied edges
-                    if (i < path.edgePath.Count) {
-                        Edge edge = path.edgePath[i];
-                        if (occupiedEdges.ContainsKey(edge)) {
-                            foreach (Agent other in occupiedEdges[edge]) {
-                                edgeConflicts.Add(new EdgeConflict(edge, i, agent, other));
-                            }
-                        } else {
-                            occupiedEdges.Add(edge, new List<Agent>());
+                        // If the destination vertex was already occupied at time t and we move to it at t+1, then there is a conflict at time t+1.
+                        if (previousVertices.ContainsKey(vertex) && previousVertices[vertex] != agent) {
+                            return new FollowingConflict(vertex, t + 1, previousVertices[vertex], agent);
                         }
-                        occupiedEdges[edge].Add(agent);
+                        currentVertices[vertex] = agent;
                     }
-
+                    // TODO: check for edge conflicts
                 }
+                previousVertices = currentVertices;
             }
             return null;
+        }
+
+        public override string ToString() {
+            String res = "Solution: cost=" + this.cost;
+            String sep = " ";
+            foreach (var entry in this.agentsPaths) {
+                int agent = entry.Key;
+                Path path = entry.Value;
+                res += sep + "agent" + agent + ": " + path.cost;
+                sep = ", ";
+            }
+
+            return res;
         }
     }
 }

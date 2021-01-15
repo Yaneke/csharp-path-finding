@@ -5,9 +5,6 @@
     <meta title="AStar visualisation" />
     <title>A* visualisation</title>
     <link rel="stylesheet" href="styles/jquery-ui.min.css">
-    <script type="text/javascript" src="scripts/jquery.js"></script>
-    <script type="text/javascript" src="scripts/jquery-ui.min.js"></script>
-    <script type="text/javascript" src="scripts/map.js"></script>
 </head>
 
 <body style="height: 100%; overflow-x: hidden;">
@@ -55,51 +52,13 @@
     <form method="post" action="shutdown">
         <input type="submit" value="Shutdown">
     </form>
+
 </body>
 
-<script>
-    $(function () {
-        $(".map.pane").resizable({
-            handles: "e, w",
-            stop: function (event, ui) {
-                setWidthInPercent(ui.element);
-            }
-
-        });
-        $(".path.pane").resizable({
-            handles: "e, w",
-            resize: function (event, ui) {
-                ui.position.left = 0;
-            },
-            stop: function (event, ui) {
-                setWidthInPercent(ui.element);
-            }
-        });
-        $(".slider").slider({
-            min: zoomMin,
-            max: zoomMax,
-            step: 1,
-            value: zoomMin,
-            animate: "fast",
-            slide: function(event, ui) {
-                document.getElementById("zoomLabel").innerHTML = ("Scale: " + ui.value);
-                zoomMapTo(ui.value);
-            },
-            change: function(event, ui) {
-                document.getElementById("zoomLabel").innerHTML = ("Scale: " + ui.value);
-            }
-        });
-        window.addEventListener("resize", function() {
-            resizeCanvas();
-        });
-    });
-    function setWidthInPercent(element) {
-        var percentageWidth = (element.width() / element.parent().width()) * 100;
-        element.width(percentageWidth + '%');
-        console.log("Width set for" + element);
-        resizeCanvas();
-        drawMap();
-    }
-</script>
+<script type="text/javascript" src="scripts/libs/jquery.js"></script>
+<script type="text/javascript" src="scripts/libs/jquery-ui.min.js"></script>
+<script type="text/javascript" src="scripts/data_types.js"></script>
+<script type="text/javascript" src="scripts/ui.js"></script>
+<script type="text/javascript" src="scripts/map.js"></script>
 
 </html>

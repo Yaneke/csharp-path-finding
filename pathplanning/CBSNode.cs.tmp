@@ -1,0 +1,158 @@
+using System;
+using System.Collections.Generic;
+using PathPlanning.Common;
+
+namespace PathPlanning.Search {
+    /// <summary>
+    /// Represents a node of the Conflict-Based Search (CBS) tree.
+    /// </summary>
+    /// When a node is created that has a parent, it inherits all constraints from that parent and receives
+    /// an additional constraint for any pawn.
+    /// The solutions for the constrained pawn must be recomputed taking into account the additional constraint.
+    /// All other pawns' solutions are inherited from the parent.
+    public class Node {
+        Node parent;
+        List<Node> children;
+        PawnID pawnValue; // the constrained pawn
+        Constraint pawnConstraint; // the additional constraint for that pawn
+        PathGroup pawnSolution = null; // the solution for the constrained pawn, if any
+        Dictionary<PawnID, PathGroup> rootSolutions = null; // base solutions (for root node only)
+        public bool IsFinal { get; set; } = false; // true iff the solutions do not have conflicts, false by default
+
+        public Node() : this(null, null, null) { }
+
+        public Node(Node parent, PawnID pawn, Constraint constraint) {
+            this.parent = parent;
+            this.children = new List<Node>();
+
+            this.pawnValue = pawn;
+            this.pawnConstraint = constraint;
+
+            if (parent == null)
+                rootSolutions = new Dictionary<PawnID, PathGroup>(); // root records base solutions
+            else {
+                parent.AddChild(this); // child notifies parent of its own existence
+            }
+        }
+
+        #region Node.Methods
+
+        private void AddChild(Node child) {
+            children.Add(child);
+        }
+
+        /// <summary> A Node is root if it has no parents. </summary>
+        public bool IsRoot => this.parent == null;
+
+        /// <summary>
+        /// Sets the path group (set of shortest paths) for a pawn.
+        /// </summary>
+        /// <param name="pawn">The pawn for which the solution has been computed.</param>
+        /// <param name="paths">A set of paths in the graph leading that pawn to its destination.</param>
+        public void SetPawnPaths(PawnID pawn, PathGroup paths) {
+            if (this.IsRoot)
+                this.rootSolutions[pawn] = paths;
+            else {
+                if (pawnValue.Equals(pawn))
+                    this.pawnSolution = paths;
+                else
+                    throw new ArgumentException("Solution provided for pawn other than constrained.");
+            }
+        }
+
+        /// <summary> 
+        /// Returns a Solution instance containing a PathGroup of optimal paths for each pawn. 
+        /// </summary>
+        public Solution GetSolution() {
+            var solution = new Solution();
+            var current = this;
+
+            // For each node from this (included) to root (not included)
+            while (!current.IsRoot) {
+                // Add that node's solution unless a child already did
+                solution.TryAddPath(current.pawnValue, current.pawnSolution);
+                current = current.parent;
+            }
+
+            // Once the root node is reached, add its solutions (unless a child already did)
+            foreach (var pawnSolution in current.rootSolutions) {
+                solution.TryAddPath(pawnSolution.Key, pawnSolution.Value);
+            }
+            return solution;
+        }
+
+        /// <summary>
+        /// Returns a dictionary mapping each pawn to its set of constraints.
+        /// </summary>
+        public Dictionary<PawnID, HashSet<Constraint>> GetConstraints() {
+            var constraints = new Dictionary<PawnID, HashSet<Constraint>>();
+            var current = this;
+
+            // For each node from this (included) to root (not included, has no constraints)
+            while (!current.IsRoot) {
+                // Add that node's constraint
+                try {
+                    constraints[current.pawnValue].Add(current.pawnConstraint);
+                } catch (KeyNotFoundException) {
+                    constraints.Add(current.pawnValue, new HashSet<Constraint> { current.pawnConstraint });
+                }
+                current = current.parent;
+            }
+            return constraints;
+        }
+
+        /// <summary>
+        /// Returns the set of constraints considered by this node for a given pawn.
+        /// </summary>
+        public HashSet<Constraint> GetConstraints(PawnID pawn) {
+            try {
+                return GetConstraints()[pawn];
+            } catch (KeyNotFoundException) {
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Uniquely identified the node's position in the tree.
+        /// </summary>
+        /// The identification is the sequence of branchings from root (R) to this node (N).
+        public string GetID(Node child = null) {
+            if (child == null) {
+                if (parent == null)
+                    return "R::N";
+                else
+                    return parent.GetID(this) + ":N";
+            } else {
+                if (parent == null)
+                    return "R:" + children.FindIndex(x => x.Equals(child)).ToString();
+                else
+                    return parent.GetID(this) + "-" + children.FindIndex(x => x.Equals(child)).ToString();
+            }
+        }
+
+        #endregion
+
+        #region Node.Overrides
+
+        public override string ToString() {
+            List<string> lines = new List<string>();
+            lines.Add("<node ID=" + this.GetID() + "> (" + (IsFinal ? "LEAF)" : "INNER)")); // final = no conflicts = leaf node
+
+            // Constraints
+            foreach (var keyValue in GetConstraints()) {
+                string constraint = "Ctr " + keyValue.Key + ":";
+                foreach (Constraint c in keyValue.Value) {
+                    constraint += " " + c.ToString();
+                }
+                lines.Add(constraint);
+            }
+
+            // Solutions
+            lines.Add(GetSolution().ToString());
+            lines.Add("</node>");
+            return string.Join(Environment.NewLine, lines);
+        }
+
+        #endregion
+    }
+}

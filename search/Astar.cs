@@ -1,13 +1,23 @@
 using System.Collections.Generic;
+using System;
 using graph;
 using data_structures;
 
 namespace search {
+    /// <summary>
+    /// This class provides A* based algorithms.
+    /// </summary>
     class Astar {
+        /// <summary>
+        /// Basic A*: shortest path from source to destination.
+        /// </summary>
         public static Path ShortestPath(Graph graph, Vertex source, Vertex destination) {
             return ShortestPath(graph, source, destination, new HashSet<Constraint>());
         }
 
+        /// <summary>
+        /// A* implementation where the algorithm takes a set of constraints into account (i.e. vertex-time tuples to avoid).
+        /// </summary>
         public static Path ShortestPath(Graph graph, Vertex source, Vertex destination, HashSet<Constraint> constraints) {
             if (!graph.Contains(source) || !graph.Contains(destination)) {
                 return null;
@@ -33,6 +43,11 @@ namespace search {
                     }
                 }
             } while (!currentPath.vertex.Equals(destination) && openSet.Count > 0);
+
+            // Handles the case where there is no path.
+            if (!bestPaths.ContainsKey(destination)) {
+                return null;
+            }
             return bestPaths[destination];
         }
     }

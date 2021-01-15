@@ -6,8 +6,8 @@ namespace graph {
     public class Path : IComparable<Path> {
         public List<Vertex> vertexPath { get; }
         public List<Edge> edgePath { get; }
-        public Vertex vertex;
-        public int length { get; }
+        public Vertex vertex { get; }
+        //public int length { get; }
         private float gCost;
         private float hCost;
         public float cost {
@@ -23,7 +23,7 @@ namespace graph {
             this.edgePath = new List<Edge>();
             this.gCost = 0f;
             this.hCost = 0f;
-            this.length = 0;
+            //this.length = 0;
             this.vertex = source;
         }
 
@@ -36,7 +36,7 @@ namespace graph {
             this.edgePath.Add(edge);
             this.gCost = parent.gCost + edge.cost;
             this.hCost = hCost;
-            this.length = parent.length + 1;
+            //this.length = parent.length + 1;
         }
 
         public List<Edge> GetEdges() {
@@ -65,7 +65,7 @@ namespace graph {
         }
 
         public Constraint ToConstraint() {
-            return new Constraint(this.vertex, this.length);
+            return new Constraint(this.vertex, this.edgePath.Count, 0);
         }
 
         public override bool Equals(object obj) {
@@ -80,7 +80,13 @@ namespace graph {
         }
 
         public override string ToString() {
-            return this.vertexPath.ToString();
+            String res = "";
+            String sep = "";
+            for (int i = 0; i < this.vertexPath.Count; i++) {
+                res += sep + this.vertexPath[i].ToString();
+                sep = ", ";
+            }
+            return res;
         }
 
 

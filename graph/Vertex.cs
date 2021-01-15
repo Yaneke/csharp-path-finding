@@ -14,7 +14,25 @@ namespace graph {
             if (v != null) {
                 this.edges.Add(new Edge(this, v, cost));
             }
+            //this.AddNeighbour(v, cost, false);
         }
+
+        /*
+        public void AddNeighbour(Vertex v, float cost, bool isBidirectional) {
+            if (v != null) {
+                if (isBidirectional) {
+                    BidirectionalEdge edge = new BidirectionalEdge(this, v, cost);
+                    if (!v.GetEdges().Contains(edge)) {
+                        this.edges.Add(edge);
+                        v.edges.Add(edge);
+                    }
+                } else {
+                    this.edges.Add(new Edge(this, v, cost));
+                }
+
+            }
+        }
+        */
 
         public List<Edge> GetEdges() {
             return this.edges;

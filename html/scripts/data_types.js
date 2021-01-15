@@ -1,4 +1,8 @@
 class Coordinate {
+    /**
+     * @param {Number} x 
+     * @param {Number} y 
+     */
     constructor(x = NaN, y = NaN) {
         this.x = x;
         this.y = y;
@@ -11,6 +15,10 @@ class Coordinate {
 
 
 class PathRequest {
+    /**
+     * @param {Coordinate} start 
+     * @param {Coordinate} end 
+     */
     constructor(start, end) {
         this.start = start;
         this.end = end;
@@ -19,6 +27,10 @@ class PathRequest {
 
 
 class Path {
+    /**
+     * @param {List<Coordinate>} coordinates 
+     * @param {Number} cost 
+     */
     constructor(coordinates, cost) {
         this.coordinates = coordinates;
         this.cost = cost;
