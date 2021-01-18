@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using graph;
 //using PathPlanning.Example;
 using search;
-using System.Linq;
+using search.cbs;
 //using PathPlanning.Common;
 
 namespace visualisation {
@@ -96,25 +96,17 @@ namespace visualisation {
         }
 
         private void GetPath(HttpListenerRequest req, HttpListenerResponse resp) {
-            Console.WriteLine("GetPath");
             try {
                 string data = ReadPostData(req);
                 Console.WriteLine(data);
-                List<data_objects.PathRequestDO> pathRequests = JsonSerializer.Deserialize<List<data_objects.PathRequestDO>>(data);
-                foreach (var pathRequest in pathRequests) {
-                    Vertex source = this.map.GetVertexAt(pathRequest.start.y, pathRequest.start.x);
-                    Vertex destination = this.map.GetVertexAt(pathRequest.end.y, pathRequest.end.x);
-                    Console.WriteLine(source);
-                    Console.WriteLine(destination);
-                    graph.Path path = Astar.ShortestPath(this.map, source, destination);
-                    data_objects.PathDO pathDTO = new data_objects.PathDO(path);
-                    resp.ContentType = "text/plain";
-                    byte[] responseData = JsonSerializer.SerializeToUtf8Bytes(pathDTO);
-                    resp.ContentLength64 = responseData.LongLength;
-                    resp.ContentEncoding = Encoding.UTF8;
-                    resp.OutputStream.Write(responseData);
-                    break;
-                }
+                data_objects.PathRequestDO pathRequests = JsonSerializer.Deserialize<data_objects.PathRequestDO>(data);
+                Solution sol = CBS.ShortestPath(this.map, pathRequests.GetSources(this.map), pathRequests.GetDestinations(this.map));
+                var res = new data_objects.PathAnswerDO(sol);
+                byte[] responseData = JsonSerializer.SerializeToUtf8Bytes(res);
+                resp.ContentType = "text/json";
+                resp.ContentLength64 = responseData.LongLength;
+                resp.ContentEncoding = Encoding.UTF8;
+                resp.OutputStream.Write(responseData);
             }
             catch (System.Text.Json.JsonException) {
                 resp.StatusCode = (int)HttpStatusCode.BadRequest;

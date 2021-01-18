@@ -2,17 +2,16 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace search {
     [TestClass]
-    class SolutionTest {
+    public class SolutionTest {
         [TestMethod]
         public void VertexConflicts() {
             // TODO
-            Assert.Equals(0, 1);
+            throw new System.Exception("Not implemented!");
         }
 
         [TestMethod]
         public void EdgeConflicts() {
-            // TODO
-            Assert.Equals(0, 1);
+            throw new System.Exception("Not implemented!");
         }
     }
 }

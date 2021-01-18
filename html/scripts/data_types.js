@@ -13,15 +13,38 @@ class Coordinate {
     }
 }
 
-
+/**
+ * Request for a number paths.
+ */
 class PathRequest {
+    constructor() {
+        this.start = new Array();
+        this.end = new Array();
+    }
+
     /**
-     * @param {Coordinate} start 
-     * @param {Coordinate} end 
+     * @param {Coordinate} start
+     * @param {Coordinate} end
      */
-    constructor(start, end) {
-        this.start = start;
-        this.end = end;
+    addPath(start, end) {
+        this.start.push(start);
+        this.end.push(end);
+    }
+
+    length() {
+        return this.start.length;
+    }
+}
+
+
+class PathAnswer {
+    constructor() {
+        this.paths = new Array();
+        this.cost = 0;
+    }
+
+    static fromJson(json) {
+        return Object.assign(new PathAnswer(), json);
     }
 }
 
@@ -35,30 +58,4 @@ class Path {
         this.coordinates = coordinates;
         this.cost = cost;
     }
-}
-
-class GraphMap {
-    constructor(width = 0, height = 0, data = null, image = null) {
-        this.width = parseInt(width);
-        this.height = parseInt(height)
-        this.data = data;
-        this.image = image;
-    }
-
-    setWidth(width) {
-        this.width = parseInt(width);
-    }
-
-    setHeight(height) {
-        this.height = parseInt(height);
-    }
-
-    resetImage() {
-        this.image = null;
-    }
-
-    isDrawn() {
-        return this.image == null;
-    }
-
 }

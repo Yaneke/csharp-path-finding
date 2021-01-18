@@ -5,11 +5,11 @@ using System;
 
 namespace search {
     public class Solution {
-        private Dictionary<int, Path> agentsPaths;
+        private List<Path> agentsPaths;
         public float cost {
             get {
                 float res = 0;
-                foreach (var path in this.agentsPaths.Values) {
+                foreach (var path in this.agentsPaths) {
                     res += path.cost;
                 }
                 return res;
@@ -17,15 +17,19 @@ namespace search {
         }
 
         public Solution() {
-            this.agentsPaths = new Dictionary<int, Path>();
+            this.agentsPaths = new List<Path>();
         }
 
-        public void Add(int agent_num, Path path) {
-            this.agentsPaths.Add(agent_num, path);
+        public void Add(Path path) {
+            this.agentsPaths.Add(path);
         }
 
         public Path GetPath(int agent) {
             return this.agentsPaths[agent];
+        }
+
+        public List<Path> GetPaths() {
+            return this.agentsPaths;
         }
 
         public bool IsValid() {
@@ -40,9 +44,8 @@ namespace search {
         public Conflict GetFirstConflict() {
             // Check initial positions
             Dictionary<Vertex, int> previousVertices = new Dictionary<Vertex, int>();
-            foreach (var entry in this.agentsPaths) {
-                int agent = entry.Key;
-                Path path = entry.Value;
+            for (int agent = 0; agent < this.agentsPaths.Count; agent++) {
+                Path path = this.agentsPaths[agent];
                 if (previousVertices.ContainsKey(path.vertexPath[0])) {
                     throw new Exception("Agents cannot have the same initial position!");
                 }
@@ -50,7 +53,7 @@ namespace search {
             }
             // Check max path length
             int nsteps = 0;
-            foreach (var path in this.agentsPaths.Values) {
+            foreach (var path in this.agentsPaths) {
                 if (path.edgePath.Count > nsteps) {
                     nsteps = path.edgePath.Count;
                 }
@@ -59,9 +62,8 @@ namespace search {
             for (int t = 0; t < nsteps; t++) {
                 Dictionary<Vertex, int> currentVertices = new Dictionary<Vertex, int>();
                 // For each agent
-                foreach (var entry in this.agentsPaths) {
-                    int agent = entry.Key;
-                    Path path = entry.Value;
+                for (int agent = 0; agent < this.agentsPaths.Count; agent++) {
+                    Path path = this.agentsPaths[agent];
                     if (t < path.edgePath.Count) {
                         Vertex vertex = path.edgePath[t].neighbour;
                         // If the destination vertex is already occupied at time t+1, then there is a conflict at time t+1.
@@ -84,9 +86,8 @@ namespace search {
         public override string ToString() {
             String res = "Solution: cost=" + this.cost;
             String sep = " ";
-            foreach (var entry in this.agentsPaths) {
-                int agent = entry.Key;
-                Path path = entry.Value;
+            for (int agent = 0; agent < this.agentsPaths.Count; agent++) {
+                Path path = this.agentsPaths[agent];
                 res += sep + "agent" + agent + ": " + path.cost;
                 sep = ", ";
             }

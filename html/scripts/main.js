@@ -4,49 +4,16 @@ var canvas = null;
 var context = null;
 var mapselect = null;
 
-var map = {
-    width: 0,
-    height: 0,
-    data: null
-};
-map = new GraphMap();
+var map = null;
 
 // MAP METADATA
 var zoomLevel = null; // 1 = show whole map in canvas ... 20 = show single cell
 const zoomMin = 1, zoomMax = 20;
-
-function resetZoom() {
-    zoomLevel = zoomMin;
-    $("#zoomSlider").slider("value", zoomMin);
-}
-
-
 var mousePos, mousePosRaw, pathStart, pathEnd, dragStart;
-function resetMeta() {
-    $("#xPathStart").val("");
-    $("#yPathStart").val("");
-    $("#xPathEnd").val("");
-    $("#yPathEnd").val("");
-    mousePos = new Coordinate();
-    mousePosRaw = new Coordinate();
-    pathStart = new Coordinate();
-    pathEnd = new Coordinate();
-    dragStart = new Coordinate();
-    resetZoom();
-}
-
-// MAP MODES
 var cntrlIsPressed = false;
 var dragZoomMode, addPathMode, mouseMoved, mapWasDragged;
 var dragMapIntervalID, drawPathIntervalID;
-function resetMode() {
-    dragZoomMode = false;
-    addPathMode = false;
-    mouseMoved = false;
-    mapWasDragged = false;
-    clearInterval(dragMapIntervalID);
-    clearInterval(drawPathIntervalID);
-}
+
 
 window.onload = function () {
     $(".slider").slider({
@@ -55,17 +22,18 @@ window.onload = function () {
         step: 1,
         value: zoomMin,
         animate: "fast",
-        slide: function (event, ui) {
+        slide: function (_, ui) {
             document.getElementById("zoomLabel").innerHTML = ("Scale: " + ui.value);
             zoomMapTo(ui.value);
         },
-        change: function (event, ui) {
+        change: function (_, ui) {
             document.getElementById("zoomLabel").innerHTML = ("Scale: " + ui.value);
         }
     });
 
     canvas = $("#canvas");
     context = canvas[0].getContext("2d");
+    map = new GraphMap(context);
     trackTransforms(context);
 
     mapselect = $("#mapselect");
@@ -89,19 +57,13 @@ window.onload = function () {
     });
 
     mapselect.on("change", function () {
-        loadMap(drawMap);
+        loadMap();
     })
 
     $.get("maps", loadMapList); // Load the maps in the select, forces redraw (see function above)
 
-    $("#loadButton").on("click", function () {
-        loadMap(drawMap);
-    });
-
     $("#getPathButton").on("click", function () {
-        var pathRequest = new PathRequest(pathStart, pathEnd)
-        console.log(JSON.stringify([pathRequest]));
-        $.post("/getPath", JSON.stringify([pathRequest]), drawPath);
+        $.post("/getPath", JSON.stringify(map.getPathRequests()), map.drawPathAnswer);
     });
 
     // --- KEY & MOUSE BINDINGS ---
@@ -124,7 +86,7 @@ window.onload = function () {
         }
     });
 
-    canvas.on("mousedown", function (event) {
+    canvas.on("mousedown", function (_event) {
         mouseMoved = false;
         if (cntrlIsPressed) {
             // Moving the mouse will drag, releasing it without moving will zoom (dezoom if shift is pressed)
@@ -163,10 +125,10 @@ window.onload = function () {
             clearInterval(drawPathIntervalID);
             mouseMoved = true; // forces to draw last line (in case mouse moved but interval did not trigger)
             whileAddingPath();
-            pathEnd.x = mousePos.x;
-            pathEnd.y = mousePos.y;
-            $("#xPathEnd").val(pathEnd.x);
-            $("#yPathEnd").val(pathEnd.y);
+            pathEnd = new Coordinate(mousePos.x, mousePos.y);
+            map.addArrow(pathStart, pathEnd);
+            $("#xPathEnd").val(mousePos.x);
+            $("#yPathEnd").val(mousePos.y);
             console.log("mouseup: exit addPathMode")
         }
         resetMode();
@@ -204,6 +166,38 @@ window.onload = function () {
     });
 };
 
+
+function resetZoom() {
+    zoomLevel = zoomMin;
+    $("#zoomSlider").slider("value", zoomMin);
+}
+
+
+
+function resetMeta() {
+    $("#xPathStart").val("");
+    $("#yPathStart").val("");
+    $("#xPathEnd").val("");
+    $("#yPathEnd").val("");
+    mousePos = new Coordinate();
+    mousePosRaw = new Coordinate();
+    pathStart = new Coordinate();
+    pathEnd = new Coordinate();
+    dragStart = new Coordinate();
+    resetZoom();
+}
+
+// MAP MODES
+
+function resetMode() {
+    dragZoomMode = false;
+    addPathMode = false;
+    mouseMoved = false;
+    mapWasDragged = false;
+    clearInterval(dragMapIntervalID);
+    clearInterval(drawPathIntervalID);
+}
+
 function updateMousePos(event) {
     // Alternative for computing position
     // const rect = canvas[0].getBoundingClientRect();
@@ -230,7 +224,8 @@ function whileAddingPath() {
         console.log("Moved path arrow.");
         pathEnd.x = mousePos.x;
         pathEnd.y = mousePos.y
-        drawMap();
+        map.draw();
+        map.drawArrow(pathStart, pathEnd);
     }
 }
 
@@ -238,7 +233,6 @@ function whileDraggingMap() {
     if (mouseMoved) {
         mouseMoved = false;
         mapWasDragged = true;
-        console.log("Dragged map.");
         translateMapFromTo();
     }
 }
@@ -249,21 +243,22 @@ function loadMapList(result) {
     result.forEach(element => {
         mapselect.append(new Option(element, element));
     });
-    loadMap(drawMap);
+    loadMap();
 }
 
-function loadMap(callback) {
+function loadMap() {
     $.get("/getSelectedMap", {
         map: $("#mapselect option:selected").text()
     }, function (result) {
         resetMeta();
+        map.reset();
         var lines = result.split("\n");
-        map.width = lines[2].split(" ")[1];
-        map.height = lines[1].split(" ")[1];
-        map.data = lines.slice(4, lines.length);
+        map.setWidth(lines[2].split(" ")[1]);
+        map.setHeight(lines[1].split(" ")[1]);
+        map.setData(lines.slice(4, lines.length));
 
         resizeCanvas(true);
-        callback()
+        map.draw();
     });
 }
 
@@ -317,7 +312,7 @@ function translateMapFromTo(from = dragStart, to = mousePosRaw) {
     // prevents scaling from putting map out of bouds
     var topLeft = context.transformedPoint(0, 0);
     context.translate(Math.min(topLeft.x, 0), Math.min(topLeft.y, 0));
-    drawMap(); // TODO use callback instead ?
+    map.draw(true); // TODO use callback instead ?
 }
 
 function zoomMapTo(value, center = context.transformedPoint(canvas[0].width / 2, canvas[0].height / 2)) {
@@ -341,59 +336,7 @@ function zoomMap(diff, center = mousePosRaw) {
     console.log("Zoomed " + trueDiff + " times, current zoom: " + zoomLevel);
 }
 
-// ----- MAP DRAWING -----
 
-function drawMap() {
-    context.save();
-    context.setTransform(1, 0, 0, 1, 0, 0);
-    context.clearRect(0, 0, canvas[0].width, canvas[0].height);
-    context.restore();
-
-    context.fillStyle = "black";
-    for (var i = 0; i < map.height; i++) {
-        for (var j = 0; j < map.width; j++) {
-            if (map.data[i][j] != ".") {
-                context.fillRect(j, i, 1, 1);
-            }
-        }
-    }
-    context.stroke();
-    if (pathStart.x && pathStart.y && pathEnd.x && pathEnd.y) drawArrow();
-}
-
-function drawArrow() {
-    var headlen = 2; // length of head in cells
-    context.lineWidth = 0.5;
-    context.strokeStyle = "green";
-    context.lineCap = "round";
-    context.lineJoin = "round";
-
-    var fromX = pathStart.x + 0.5, fromY = pathStart.y + 0.5;
-    var toX = pathEnd.x + 0.5, toY = pathEnd.y + 0.5;
-    var dx = toX - fromX;
-    var dy = toY - fromY;
-    var angle = Math.atan2(dy, dx);
-    context.beginPath();
-    context.moveTo(fromX, fromY);
-    context.lineTo(toX, toY);
-    context.lineTo(toX - headlen * Math.cos(angle - Math.PI / 6), toY - headlen * Math.sin(angle - Math.PI / 6));
-    context.moveTo(toX, toY);
-    context.lineTo(toX - headlen * Math.cos(angle + Math.PI / 6), toY - headlen * Math.sin(angle + Math.PI / 6));
-    context.closePath();
-    context.stroke();
-}
-
-function drawPath(path) {
-    console.log(path);
-    var textPath = "" + path.length + "\n";
-    context.fillStyle = "red";
-    path.forEach(function (vertexString) {
-        var [y, x] = vertexString.id.split(", ");
-        textPath += "(" + x + ", " + y + ") ";
-        context.fillRect(x, y, 1, 1);
-    });
-    $("#pathResult").text(textPath);
-}
 
 // ----- TRANSFORMS TRACKING -----
 

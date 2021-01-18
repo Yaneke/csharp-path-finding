@@ -41,7 +41,7 @@ namespace search.cbs {
             Solution s = new Solution();
             for (int i = 0; i < sources.Count; i++) {
                 Path path = Astar.ShortestPath(graph, sources[i], destinations[i], constraints.GetConstraints(i));
-                s.Add(i, path);
+                s.Add(path);
             }
             return s;
         }

@@ -62,7 +62,7 @@ namespace data_structures {
 
             ConstraintSet c1 = new ConstraintSet();
             Solution s1 = new Solution();
-            s1.Add(0, p);
+            s1.Add(p);
             CBSNode n1 = new CBSNode(c1, s1);
             heap.Add(n1);
             Assert.AreEqual(1, heap.Count);
