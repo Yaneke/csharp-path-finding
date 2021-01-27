@@ -16,12 +16,29 @@ namespace search {
             }
         }
 
+        public Solution Clone() {
+            Solution s = new Solution();
+            foreach (var path in this.agentsPaths) {
+                s.Add(path);
+            }
+            return s;
+        }
+
         public Solution() {
             this.agentsPaths = new List<Path>();
         }
 
         public void Add(Path path) {
             this.agentsPaths.Add(path);
+        }
+
+        public void ReplacePath(int agent, Path newPath) {
+            if (agent < this.agentsPaths.Count) {
+                this.agentsPaths[agent] = newPath;
+            } else {
+                throw new Exception("Could not replace the Path of agent " + agent + " bacause there is no path for him.");
+            }
+
         }
 
         public Path GetPath(int agent) {

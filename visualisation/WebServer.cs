@@ -5,10 +5,7 @@ using System.Net;
 using System.Text.Json;
 using System.Collections.Generic;
 using graph;
-//using PathPlanning.Example;
-using search;
 using search.cbs;
-//using PathPlanning.Common;
 
 namespace visualisation {
     class HttpServer {
@@ -100,7 +97,7 @@ namespace visualisation {
                 string data = ReadPostData(req);
                 Console.WriteLine(data);
                 data_objects.PathRequestDO pathRequests = JsonSerializer.Deserialize<data_objects.PathRequestDO>(data);
-                Solution sol = CBS.ShortestPath(this.map, pathRequests.GetSources(this.map), pathRequests.GetDestinations(this.map));
+                search.Solution sol = CBS.ShortestPath(this.map, pathRequests.GetSources(this.map), pathRequests.GetDestinations(this.map));
                 var res = new data_objects.PathAnswerDO(sol);
                 byte[] responseData = JsonSerializer.SerializeToUtf8Bytes(res);
                 resp.ContentType = "text/json";

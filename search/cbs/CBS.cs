@@ -1,6 +1,5 @@
 using graph;
 using data_structures;
-using System;
 using System.Collections.Generic;
 
 namespace search.cbs {
@@ -25,13 +24,12 @@ namespace search.cbs {
                     var cons = conflict.GetConstraint(agent);
                     if (cons != null) {
                         constraints.Add(cons);
-                        solution = CBS.LowLevelSearch(graph, sources, destinations, constraints);
+                        solution = CBS.LowLevelSearch(graph, sources[agent], destinations[agent], constraints.GetConstraints(agent), bestNode.solution, agent);
                         if (solution != null) {
                             ct.Add(new CBSNode(constraints, solution));
                         }
                     }
                 }
-
             } while (ct.Count > 0);
 
             return null;
@@ -43,6 +41,13 @@ namespace search.cbs {
                 Path path = Astar.ShortestPath(graph, sources[i], destinations[i], constraints.GetConstraints(i));
                 s.Add(path);
             }
+            return s;
+        }
+
+
+        private static Solution LowLevelSearch(Graph graph, Vertex source, Vertex destination, HashSet<Constraint> constraints, Solution partialSolution, int agent) {
+            Solution s = partialSolution.Clone();
+            s.ReplacePath(agent, Astar.ShortestPath(graph, source, destination, constraints));
             return s;
         }
     }
