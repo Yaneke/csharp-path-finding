@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="BenchmarkDotnet" Version="0.12.1" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.0.1" />
     <PackageReference Include="MSTest.TestAdapter" Version="1.4.0" />
     <PackageReference Include="MSTest.TestFramework" Version="1.4.0" />
@@ -16,7 +17,7 @@
   <Reference Include="PathPlanning">
     <HintPath>dll\PathPlanning.dll</HintPath>
   </Reference>
-  <PackageReference Include="OptimizedPriorityQueue" Version="4.2.0">
+  <PackageReference Include="OptimizedPriorityQueue" Version="5.0.0">
     <HintPath>dll\Priority Queue.dll</HintPath>
   </PackageReference>
 </ItemGroup>
