@@ -47,7 +47,7 @@ namespace search.cbs {
 
         private static Solution LowLevelSearch(Graph graph, Vertex source, Vertex destination, HashSet<Constraint> constraints, Solution partialSolution, int agent) {
             Solution s = partialSolution.Clone();
-            s.ReplacePath(agent, Astar.ShortestPath(graph, source, destination, constraints));
+            s.ReplacePath(agent, Astar.FastShortestPath(graph, source, destination, constraints));
             return s;
         }
     }

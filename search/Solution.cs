@@ -10,7 +10,9 @@ namespace search {
             get {
                 float res = 0;
                 foreach (var path in this.agentsPaths) {
-                    res += path.cost;
+                    if (path != null) {
+                        res += path.cost;
+                    }
                 }
                 return res;
             }
@@ -63,15 +65,17 @@ namespace search {
             Dictionary<Vertex, int> previousVertices = new Dictionary<Vertex, int>();
             for (int agent = 0; agent < this.agentsPaths.Count; agent++) {
                 Path path = this.agentsPaths[agent];
-                if (previousVertices.ContainsKey(path.vertexPath[0])) {
-                    throw new Exception("Agents cannot have the same initial position!");
+                if (path != null) {
+                    if (previousVertices.ContainsKey(path.vertexPath[0])) {
+                        throw new Exception("Agents cannot have the same initial position!");
+                    }
+                    previousVertices.Add(path.vertexPath[0], agent);
                 }
-                previousVertices.Add(path.vertexPath[0], agent);
             }
             // Check max path length
             int nsteps = 0;
             foreach (var path in this.agentsPaths) {
-                if (path.edgePath.Count > nsteps) {
+                if (path != null && path.edgePath.Count > nsteps) {
                     nsteps = path.edgePath.Count;
                 }
             }
@@ -81,7 +85,7 @@ namespace search {
                 // For each agent
                 for (int agent = 0; agent < this.agentsPaths.Count; agent++) {
                     Path path = this.agentsPaths[agent];
-                    if (t < path.edgePath.Count) {
+                    if (path != null && t < path.edgePath.Count) {
                         Vertex vertex = path.edgePath[t].neighbour;
                         // If the destination vertex is already occupied at time t+1, then there is a conflict at time t+1.
                         if (currentVertices.ContainsKey(vertex)) {

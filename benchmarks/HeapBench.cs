@@ -1,7 +1,6 @@
 using System;
 using BenchmarkDotNet.Attributes;
 using data_structures;
-using Priority_Queue;
 
 namespace Benchmarks {
     public class HeapBenchmarks {
@@ -9,7 +8,6 @@ namespace Benchmarks {
         public int QueueSize;
 
         private Heap<int> heap;
-        private int[] randomOrder;
         private int[] items;
 
         [GlobalSetup]

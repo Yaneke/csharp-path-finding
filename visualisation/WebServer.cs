@@ -97,7 +97,9 @@ namespace visualisation {
                 string data = ReadPostData(req);
                 Console.WriteLine(data);
                 data_objects.PathRequestDO pathRequests = JsonSerializer.Deserialize<data_objects.PathRequestDO>(data);
-                search.Solution sol = CBS.ShortestPath(this.map, pathRequests.GetSources(this.map), pathRequests.GetDestinations(this.map));
+                List<Vertex> sources = pathRequests.GetSources(this.map);
+                List<Vertex> destinations = pathRequests.GetDestinations(this.map);
+                search.Solution sol = CBS.ShortestPath(this.map, sources, destinations);
                 var res = new data_objects.PathAnswerDO(sol);
                 byte[] responseData = JsonSerializer.SerializeToUtf8Bytes(res);
                 resp.ContentType = "text/json";
