@@ -1,5 +1,5 @@
 
-COLOURS = ["green", "red", "blue"];
+COLOURS = ["green", "red", "blue", "cyan", "yellow", "orange"];
 
 class GraphMap {
     constructor(context) {
@@ -57,12 +57,11 @@ class GraphMap {
                     }
                 }
             }
-            context.stroke();
             for (var i = 0; i < this.pathRequest.length(); i++) {
                 this.drawArrow(this.pathRequest.start[i], this.pathRequest.end[i], COLOURS[i]);
             }
             this.image = context.getImageData(0, 0, canvas[0].width, canvas[0].height);
-            this.image.data.set(new Uint8ClampedArray(graphMap.imageData.data));
+            this.image.data.set(new Uint8ClampedArray(this.image.data));
         } else {
             this.context.putImageData(this.image, 0, 0);
         }
@@ -116,6 +115,12 @@ class GraphMap {
     getPathRequests() {
         console.log(JSON.stringify(this.pathRequest));
         return this.pathRequest;
+    }
+
+    resetPaths() {
+        console.log("Clicked");
+        this.pathRequest = new PathRequest();
+        this.draw(true);
     }
 
 }

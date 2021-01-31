@@ -3,7 +3,7 @@ using System.Collections.Generic;
 namespace graph {
     public abstract class Graph {
         private HashSet<Vertex> vertices;
-        public int Count {
+        public int VertexCount {
             get {
                 return vertices.Count;
             }
@@ -29,7 +29,7 @@ namespace graph {
 
 
         public override string ToString() {
-            return "" + this.vertices.Count;
+            return "" + this.VertexCount;
         }
     }
 }

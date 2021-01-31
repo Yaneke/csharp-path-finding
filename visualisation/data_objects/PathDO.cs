@@ -7,13 +7,15 @@ namespace visualisation.data_objects {
 
         public PathDO(graph.Path path) {
             this.coordinates = new List<CoordinateDO>();
-            foreach (var vertex in path.vertexPath) {
-                if (vertex is graph.GridVertex) {
-                    var gridVertex = (graph.GridVertex)vertex;
-                    this.coordinates.Add(new CoordinateDO(gridVertex.j, gridVertex.i));
-                } else {
-                    Console.WriteLine("Not a grid vertex!");
-                    throw new Exception("Not yet implemented !");
+            if (path != null) {
+                foreach (var vertex in path.vertexPath) {
+                    if (vertex is graph.GridVertex) {
+                        var gridVertex = (graph.GridVertex)vertex;
+                        this.coordinates.Add(new CoordinateDO(gridVertex.j, gridVertex.i));
+                    } else {
+                        Console.WriteLine("Not a grid vertex!");
+                        throw new Exception("Not yet implemented !");
+                    }
                 }
             }
         }
