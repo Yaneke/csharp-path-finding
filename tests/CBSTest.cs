@@ -96,5 +96,10 @@ namespace search {
             Assert.AreEqual(2, s.cost);
             Assert.AreEqual(3, s.GetPath(0).edgePath.Count + s.GetPath(1).edgePath.Count);
         }
+
+
+        public void PathWithConstraintThatMakesAstarReturnNull() {
+            // TODO
+        }
     }
 }

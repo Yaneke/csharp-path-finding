@@ -66,6 +66,8 @@ window.onload = function () {
         $.post("/getPath", JSON.stringify(map.getPathRequests()), map.drawPathAnswer);
     });
 
+    $("#resetPathButton").on("click", function () { map.resetPaths(); });
+
     // --- KEY & MOUSE BINDINGS ---
 
     // Cntrl key down: mousedown will enter drag/zoom mode 
