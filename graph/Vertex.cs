@@ -14,7 +14,6 @@ namespace graph {
             if (v != null) {
                 this.edges.Add(new Edge(this, v, cost));
             }
-            //this.AddNeighbour(v, cost, false);
         }
 
         /*
