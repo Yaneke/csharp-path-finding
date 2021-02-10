@@ -5,10 +5,9 @@ using System.Collections.Generic;
 namespace search.cbs {
     public class CBS {
         public static Solution ShortestPath(Graph graph, List<Vertex> sources, List<Vertex> destinations) {
-            // TODO: check #sources == #destinations
-            ConstraintSet constraints = new ConstraintSet();
-            Solution solution = CBS.LowLevelSearch(graph, sources, destinations, constraints);
-            CBSNode root = new CBSNode(constraints, solution);
+            ConstraintSet emptyConstraints = new ConstraintSet();
+            Solution solution = CBS.LowLevelSearch(graph, sources, destinations, emptyConstraints);
+            CBSNode root = new CBSNode(emptyConstraints, solution);
             Heap<CBSNode> ct = new Heap<CBSNode>();
             ct.Add(root);
             do {
@@ -17,10 +16,9 @@ namespace search.cbs {
                 if (conflict == null) { // No conflict -> found a solution
                     return bestNode.solution;
                 }
-                // TODO: check if the conflict should merge with an existing one? Does it work with the heap?
                 // For each agent in the conflict, create a new node.
                 foreach (int agent in conflict.GetAgents()) {
-                    constraints = bestNode.constraints.Clone();
+                    ConstraintSet constraints = bestNode.constraints.Clone();
                     var cons = conflict.GetConstraint(agent);
                     if (cons != null) {
                         constraints.Add(cons);
@@ -47,7 +45,7 @@ namespace search.cbs {
 
         private static Solution LowLevelSearch(Graph graph, Vertex source, Vertex destination, HashSet<Constraint> constraints, Solution partialSolution, int agent) {
             Solution s = partialSolution.Clone();
-            s.ReplacePath(agent, Astar.FastShortestPath(graph, source, destination, constraints));
+            s.ReplacePath(agent, Astar.ShortestPath(graph, source, destination, constraints));
             return s;
         }
     }
