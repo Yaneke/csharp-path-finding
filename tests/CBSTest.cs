@@ -3,9 +3,10 @@ using search.cbs;
 using System.Collections.Generic;
 using System;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using search;
 
 
-namespace search {
+namespace tests {
     [TestClass]
     public class CBSTest {
         [TestMethod]

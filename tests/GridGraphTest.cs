@@ -1,8 +1,9 @@
 using graph;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using search;
 
 
-namespace search {
+namespace tests {
     [TestClass]
     public class GridGraphTest {
         [TestMethod]
