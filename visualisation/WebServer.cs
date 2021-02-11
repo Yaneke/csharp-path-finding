@@ -83,7 +83,7 @@ namespace visualisation {
             string fileName = "data/" + req.QueryString["map"];
             resp.OutputStream.Write(File.ReadAllBytes(fileName));
             //this.map = Parser.ParseFile(fileName);
-            this.map = new GridGraph(fileName, true);
+            this.map = new GridGraph(fileName, true, 0);
         }
 
         private string ReadPostData(HttpListenerRequest req) {
@@ -99,7 +99,8 @@ namespace visualisation {
                 data_objects.PathRequestDO pathRequests = JsonSerializer.Deserialize<data_objects.PathRequestDO>(data);
                 List<Vertex> sources = pathRequests.GetSources(this.map);
                 List<Vertex> destinations = pathRequests.GetDestinations(this.map);
-                search.Solution sol = CBS.ShortestPath(this.map, sources, destinations);
+                CBS cbs = new CBS().WithCardinalConflicts().WithFollowingConflicts().WithVertexConflicts();
+                search.Solution sol = cbs.ShortestPath(this.map, sources, destinations);
                 var res = new data_objects.PathAnswerDO(sol);
                 byte[] responseData = JsonSerializer.SerializeToUtf8Bytes(res);
                 resp.ContentType = "text/json";

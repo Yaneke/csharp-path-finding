@@ -1,10 +1,37 @@
 using graph;
 using data_structures;
 using System.Collections.Generic;
+using System;
 
 namespace search.cbs {
     public class CBS {
-        public static Solution ShortestPath(Graph graph, List<Vertex> sources, List<Vertex> destinations) {
+
+        private HashSet<ConflictChecker> checkers;
+
+        public CBS() {
+            this.checkers = new HashSet<ConflictChecker>();
+        }
+
+        public CBS WithVertexConflicts() {
+            this.checkers.Add(new VertexConflictChecker());
+            return this;
+        }
+
+        public CBS WithFollowingConflicts() {
+            this.checkers.Add(new FollowingConflictChecker());
+            return this;
+        }
+
+        public CBS WithCardinalConflicts() {
+            this.checkers.Add(new CardinalConflictChecker());
+            return this;
+        }
+
+        public static CBS Default() {
+            return new CBS().WithFollowingConflicts().WithVertexConflicts();
+        }
+
+        public Solution ShortestPath(Graph graph, List<Vertex> sources, List<Vertex> destinations) {
             ConstraintSet emptyConstraints = new ConstraintSet();
             Solution solution = CBS.LowLevelSearch(graph, sources, destinations, emptyConstraints);
             CBSNode root = new CBSNode(emptyConstraints, solution);
@@ -12,10 +39,11 @@ namespace search.cbs {
             ct.Add(root);
             do {
                 CBSNode bestNode = ct.Pop();
-                Conflict conflict = bestNode.solution.GetFirstConflict();
+                Conflict conflict = bestNode.solution.GetFirstConflict(this.checkers);
                 if (conflict == null) { // No conflict -> found a solution
                     return bestNode.solution;
                 }
+                Console.WriteLine(conflict);
                 // For each agent in the conflict, create a new node.
                 foreach (int agent in conflict.GetAgents()) {
                     ConstraintSet constraints = bestNode.constraints.Clone();
@@ -32,6 +60,8 @@ namespace search.cbs {
 
             return null;
         }
+
+
 
         private static Solution LowLevelSearch(Graph graph, List<Vertex> sources, List<Vertex> destinations, ConstraintSet constraints) {
             Solution s = new Solution();
