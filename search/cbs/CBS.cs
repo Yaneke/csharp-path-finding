@@ -43,7 +43,6 @@ namespace search.cbs {
                 if (conflict == null) { // No conflict -> found a solution
                     return bestNode.solution;
                 }
-                Console.WriteLine(conflict);
                 // For each agent in the conflict, create a new node.
                 foreach (int agent in conflict.GetAgents()) {
                     ConstraintSet constraints = bestNode.constraints.Clone();

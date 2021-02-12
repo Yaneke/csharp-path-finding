@@ -38,22 +38,68 @@
 
                 </div>
 
-                <div class="path pane"
-                    style="display: table-cell; padding: 5px; width: 50%; background-color: ivory; border: solid; border-width: 0px; border-left-width: 1px;">
-                    <h2> The path </h2>
-                    <div class="controlgroup" style="width: 100%; border: solid; border-width: 1px; padding: 3px;">
-                        <label>Path start: </label>
-                        x = <input id="xPathStart" type="text" size="3" /> y = <input id="yPathStart" type="text"
-                            size="3" />
-                        <br />
-                        <label>Path end: </label>
-                        x = <input id="xPathEnd" type="text" size="3" /> y = <input id="yPathEnd" type="text"
-                            size="3" />
-                        <input id="getPathButton" type="button" value="Compute path" />
-                        <input id="resetPathButton" type="button" value="Reset path" /><br />
+                <div class="row" style="height: 100%;padding: 5px; background-color: ivory; ">
+                    <div class="col-12">
+                        <h3> Path parameters </h3>
+                        <div class="m-2">
+                            <label>Path start: </label>
+                            x = <input id="xPathStart" type="text" size="3" /> y = <input id="yPathStart" type="text"
+                                size="3" />
+                            <br />
+                            <div>
+                                Path end: x = <input id="xPathEnd" type="text" size="3" />
+                                y = <input id="yPathEnd" type="text" size="3" />
+                            </div>
+                            <div>
+                                <input id="getPathButton" type="button" value="Compute path" />
+                                <input id="resetPathButton" type="button" value="Reset path" />
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="m-2">
+                            <h3> Constraints </h3>
+                            <div>
+                                <label>
+                                    <input type="checkbox" name="cardinal" class="constraint" />
+                                    Cardinal conflicts
+                                </label>
+                                <label>
+                                    <input type="checkbox" name="vertex" class="constraint" checked />
+                                    Vertex conflicts
+                                </label>
+                                <label>
+                                    <input type="checkbox" name="following" class="constraint" />
+                                    Following conflicts
+                                </label>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="m-2">
+                            <h3> Path result </h3>
+                            <label>
+                                Solution cost
+                                <input id="solutionCost" type="text" size="5" readonly>
+                            </label>
+                            <br />
+                            <label>
+                                Computation time
+                                <input id="computationTime" type="text" size="5" readonly> s
+                            </label>
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th> Agent </th>
+                                        <th> Path length </th>
+                                        <th> Path string </th>
+                                    </tr>
+                                <tbody id="result_tbody">
+
+                                </tbody>
+                                </thead>
+                            </table>
+                        </div>
+                        <hr>
                     </div>
-                    <textarea id="pathResult" cols="30" rows="10"
-                        style="width: 100%; border: solid; border-width: 1px;"></textarea> <br />
                 </div>
             </div>
 
