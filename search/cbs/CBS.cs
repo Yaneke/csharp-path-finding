@@ -40,6 +40,7 @@ namespace search.cbs {
             do {
                 CBSNode bestNode = ct.Pop();
                 Conflict conflict = bestNode.solution.GetFirstConflict(this.checkers);
+                Console.WriteLine(conflict);
                 if (conflict == null) { // No conflict -> found a solution
                     return bestNode.solution;
                 }
@@ -48,7 +49,7 @@ namespace search.cbs {
                     ConstraintSet constraints = bestNode.constraints.Clone();
                     var cons = conflict.GetConstraint(agent);
                     if (cons != null) {
-                        constraints.Add(cons);
+                        constraints.Add(cons, agent);
                         solution = CBS.LowLevelSearch(graph, sources[agent], destinations[agent], constraints.GetConstraints(agent), bestNode.solution, agent);
                         if (solution != null) {
                             ct.Add(new CBSNode(constraints, solution));
@@ -56,7 +57,6 @@ namespace search.cbs {
                     }
                 }
             } while (ct.Count > 0);
-
             return null;
         }
 

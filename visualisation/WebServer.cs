@@ -11,7 +11,6 @@ using search.cbs;
 namespace visualisation {
     class HttpServer {
         private HttpListener listener;
-        private bool runServer;
         private GridGraph map;
         private CBS cbs;
         //private PathPlanning.Example.Graph map;
@@ -25,9 +24,8 @@ namespace visualisation {
 
 
         public void HandleIncomingConnections() {
-            this.runServer = true;
             // While a user hasn't visited the `shutdown` url, keep on handling requests
-            while (this.runServer) {
+            while (true) {
                 // Will wait here until we hear from a connection
                 HttpListenerContext ctx = this.listener.GetContext();
                 string log = "[" + ctx.Request.HttpMethod + "] " + ctx.Request.Url.AbsolutePath;

@@ -11,6 +11,25 @@ namespace graph {
             this.cost = cost;
         }
 
+        public CardinalDirection ComputeDirection() {
+            GridVertex src = (GridVertex)this.start;
+            GridVertex dst = (GridVertex)this.neighbour;
+            int delta_i = dst.i - src.i;
+            if (delta_i == 1) {
+                return CardinalDirection.South;
+            } else if (delta_i == -1) {
+                return CardinalDirection.North;
+            } else {
+                int delta_j = dst.j - src.j;
+                if (delta_j == 1) {
+                    return CardinalDirection.East;
+                } else if (delta_j == -1) {
+                    return CardinalDirection.West;
+                }
+            }
+            return CardinalDirection.None;
+        }
+
         public override string ToString() {
             return this.start.ToString() + "->" + this.neighbour.ToString();
         }

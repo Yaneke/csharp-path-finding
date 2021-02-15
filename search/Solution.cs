@@ -60,7 +60,7 @@ namespace search {
         }
 
         /// <summary>
-        /// Find the first conflict in a solution if any. Returns null if none.
+        /// Find the first conflict in a solution if any. Returns null otherwise.
         /// </summary>
         /// NB: This is implemented in a rather non-intuitive manner in order to spot 
         /// conflicts as soon as possible.
@@ -122,25 +122,6 @@ namespace search {
                 // previousVertices = currentVertices;
             }
             return null;
-        }
-
-        private CardinalDirection ComputeDirection(Edge e) {
-            GridVertex src = (GridVertex)e.start;
-            GridVertex dst = (GridVertex)e.neighbour;
-            int delta_i = dst.i - src.i;
-            if (delta_i == 1) {
-                return CardinalDirection.South;
-            } else if (delta_i == -1) {
-                return CardinalDirection.North;
-            } else {
-                int delta_j = dst.j - src.j;
-                if (delta_j == 1) {
-                    return CardinalDirection.East;
-                } else if (delta_j == -1) {
-                    return CardinalDirection.West;
-                }
-            }
-            return CardinalDirection.None;
         }
 
         public override string ToString() {
