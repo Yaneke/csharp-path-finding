@@ -33,14 +33,13 @@ namespace tests {
         public void CardinalConflicts() {
             GridGraph g = new GridGraph("../../../data/empty-16-16.map");
             Path path1 = Astar.ShortestPath(g, g.GetVertexAt(0, 0), g.GetVertexAt(0, 5));
-            Path path2 = Astar.ShortestPath(g, g.GetVertexAt(2, 0), g.GetVertexAt(2, 5));
+            Path path2 = Astar.ShortestPath(g, g.GetVertexAt(2, 0), g.GetVertexAt(2, 3));
             Solution s = new Solution();
             s.Add(path1);
             s.Add(path2);
             HashSet<ConflictChecker> checkers = new HashSet<ConflictChecker>();
             checkers.Add(new CardinalConflictChecker());
             Conflict c = s.GetFirstConflict(checkers);
-            Console.WriteLine(c);
             Assert.IsTrue(c is CardinalConflict);
             Assert.AreEqual(1, c.timestep);
         }

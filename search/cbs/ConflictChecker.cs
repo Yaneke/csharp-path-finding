@@ -65,17 +65,17 @@ namespace search.cbs {
         /// We have to remember the destination vertex of each conflicting agent to be able to 
         /// the corresponding issue constraints.
         public override Conflict Check(Solution solution, int timestep) {
-            Dictionary<CardinalDirection, (int, Vertex)> directionTaken = new Dictionary<CardinalDirection, (int, Vertex)>();
+            Dictionary<CardinalDirection, int> directionTaken = new Dictionary<CardinalDirection, int>();
             for (int agent = 0; agent < solution.AgentCount; agent++) {
                 Path agentPath = solution.GetPath(agent);
                 if (timestep < agentPath.edgePath.Count) {
                     Edge currentEdge = agentPath.edgePath[timestep];
                     CardinalDirection direction = this.ComputeDirection(currentEdge);
                     if (directionTaken.ContainsKey(direction)) {
-                        (int conflictingAgent, Vertex conflictingAgentVertex) = directionTaken[direction];
-                        return new CardinalConflict(conflictingAgent, conflictingAgentVertex, agent, currentEdge.neighbour, timestep + 1, direction);
+                        int conflictingAgent = directionTaken[direction];
+                        return new CardinalConflict(conflictingAgent, agent, direction, timestep + 1);
                     }
-                    directionTaken.Add(direction, (agent, currentEdge.neighbour));
+                    directionTaken.Add(direction, agent);
                 }
             }
             return null;

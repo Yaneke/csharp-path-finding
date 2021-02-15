@@ -64,8 +64,12 @@ namespace graph {
             return this.vertex.GetHashCode();
         }
 
-        public Constraint ToConstraint() {
-            return new Constraint(this.vertex, this.edgePath.Count, 0);
+        public HashSet<Constraint> ToConstraints() {
+            HashSet<Constraint> constraints = new HashSet<Constraint>();
+            constraints.Add(new Constraint(this.vertex, this.edgePath.Count));
+            CardinalDirection direction = this.edgePath[this.edgePath.Count - 1].ComputeDirection();
+            constraints.Add(new Constraint(direction, this.edgePath.Count));
+            return constraints;
         }
 
         public override bool Equals(object obj) {

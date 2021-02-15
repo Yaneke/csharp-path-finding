@@ -6,7 +6,14 @@ namespace search {
     public abstract class Conflict {
         public int timestep { get; }
 
+        /// <summary> 
+        /// Returns the list of agents involved in the conflict.
+        /// </summary>
         public abstract List<int> GetAgents();
+
+        /// <summary> 
+        /// Returns the constraint associated to the conflict if any. Returns null otherwise.
+        /// </summary>
         public abstract Constraint GetConstraint(int agent);
 
         public Conflict(int timestep) {
@@ -34,9 +41,9 @@ namespace search {
 
         public override Constraint GetConstraint(int agent) {
             if (agent == this.agent1) {
-                return new Constraint(this.vertex, this.timestep, this.agent1);
+                return new Constraint(this.vertex, this.timestep);
             } else if (agent == agent2) {
-                return new Constraint(this.vertex, this.timestep, this.agent2);
+                return new Constraint(this.vertex, this.timestep);
             }
             return null;
         }
@@ -69,9 +76,9 @@ namespace search {
         public override Constraint GetConstraint(int agent) {
             // Do not create constraints for t=0 (initial position).
             if (agent == this.leaving_agent && this.timestep > 1) {
-                return new Constraint(this.vertex, this.timestep - 1, this.leaving_agent);
+                return new Constraint(this.vertex, this.timestep - 1);
             } else if (agent == following_agent) {
-                return new Constraint(this.vertex, this.timestep, this.following_agent);
+                return new Constraint(this.vertex, this.timestep);
             }
             return null;
         }
@@ -115,15 +122,11 @@ namespace search {
     public class CardinalConflict : Conflict {
         public int agent1 { get; }
         public int agent2 { get; }
-        public Vertex agent1Destination { get; }
-        public Vertex agent2Destination { get; }
         public CardinalDirection direction { get; }
 
-        public CardinalConflict(int agent1, Vertex agent1Destination, int agent2, Vertex agent2Destination, int timestep, CardinalDirection direction) : base(timestep) {
+        public CardinalConflict(int agent1, int agent2, CardinalDirection direction, int timestep) : base(timestep) {
             this.agent1 = agent1;
-            this.agent1Destination = agent1Destination;
             this.agent2 = agent2;
-            this.agent2Destination = agent2Destination;
             this.direction = direction;
         }
 
@@ -135,10 +138,8 @@ namespace search {
         }
 
         public override Constraint GetConstraint(int agent) {
-            if (agent == this.agent1) {
-                return new Constraint(this.agent1Destination, this.timestep, this.agent1);
-            } else if (agent == this.agent2) {
-                return new Constraint(this.agent2Destination, this.timestep, this.agent2);
+            if (agent == this.agent1 || agent == this.agent2) {
+                return new Constraint(this.direction, this.timestep);
             }
             throw new System.Exception("The given agent is not in the conflict!");
         }

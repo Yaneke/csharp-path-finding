@@ -21,19 +21,19 @@ namespace search {
             return new ConstraintSet(this);
         }
 
-        public void Add(Constraint constraint) {
-            if (!this.constraints.ContainsKey(constraint.agent)) {
-                this.constraints.Add(constraint.agent, new HashSet<Constraint>());
+        public void Add(Constraint constraint, int agent) {
+            if (!this.constraints.ContainsKey(agent)) {
+                this.constraints.Add(agent, new HashSet<Constraint>());
             }
-            if (!this.constraints[constraint.agent].Contains(constraint)) {
-                this.constraints[constraint.agent].Add(constraint);
+            if (!this.constraints[agent].Contains(constraint)) {
+                this.constraints[agent].Add(constraint);
                 this.Count++;
             }
         }
 
-        public void Add(List<Constraint> constraints) {
+        public void Add(List<Constraint> constraints, int agent) {
             foreach (Constraint c in constraints) {
-                this.Add(c);
+                this.Add(c, agent);
             }
         }
 
@@ -67,9 +67,9 @@ namespace search {
     public class Constraint {
         public object constrainedObject { get; }
         public int timestep { get; }
-        public int agent { get; }
+        private int agent { get; }
 
-        public Constraint(object constrainedObject, int timestep, int agent) {
+        public Constraint(object constrainedObject, int timestep) {
             this.constrainedObject = constrainedObject;
             this.timestep = timestep;
             this.agent = agent;
@@ -92,7 +92,7 @@ namespace search {
 
         public override string ToString() {
             string type = this.constrainedObject.GetType().ToString();
-            return "Constraint " + type + "=" + this.constrainedObject.ToString() + " agent=" + this.agent + " t=" + this.timestep;
+            return "Constraint " + type + "=" + this.constrainedObject.ToString() + " t=" + this.timestep;
         }
     }
 

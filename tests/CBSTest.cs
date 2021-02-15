@@ -124,6 +124,18 @@ namespace tests {
         }
 
 
+        [TestMethod]
+        public void CardinalConflicts_BigMap() {
+            GridGraph g = new GridGraph("../../../data/Boston_0_256.map");
+            // Path 1 (153,23) -> (153,33)
+            // Path 2 (162,23) -> (162,35)
+            List<Vertex> sources = new List<Vertex> { g.GetVertexAt(23, 153), g.GetVertexAt(23, 162) };
+            List<Vertex> destinations = new List<Vertex> { g.GetVertexAt(33, 153), g.GetVertexAt(35, 162) };
+            Solution sol = new CBS().WithCardinalConflicts().ShortestPath(g, sources, destinations);
+            Assert.IsNotNull(sol);
+        }
+
+
         public void PathWithConstraintThatMakesAstarReturnNull() {
             // TODO
         }
