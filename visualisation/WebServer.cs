@@ -107,6 +107,9 @@ namespace visualisation {
                 if (constraintUpdate.vertex) {
                     this.cbs.WithVertexConflicts();
                 }
+                if (constraintUpdate.edge) {
+                    this.cbs.WithEdgeConflicts();
+                }
                 resp.ContentLength64 = 0;
                 resp.ContentType = "plain";
             }

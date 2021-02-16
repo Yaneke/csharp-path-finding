@@ -27,8 +27,13 @@ namespace search.cbs {
             return this;
         }
 
+        public CBS WithEdgeConflicts() {
+            this.checkers.Add(new EdgeConflictChecker());
+            return this;
+        }
+
         public static CBS Default() {
-            return new CBS().WithFollowingConflicts().WithVertexConflicts();
+            return new CBS().WithFollowingConflicts().WithVertexConflicts().WithEdgeConflicts();
         }
 
         public Solution ShortestPath(Graph graph, List<Vertex> sources, List<Vertex> destinations) {

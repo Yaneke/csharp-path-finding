@@ -12,7 +12,6 @@ namespace search.cbs {
     }
 
 
-
     public class VertexConflictChecker : ConflictChecker {
 
         public override Conflict Check(Solution solution, int timestep) {
@@ -57,6 +56,28 @@ namespace search.cbs {
         }
     }
 
+    public class EdgeConflictChecker : ConflictChecker {
+
+        /// <summary>
+        /// A Cardinal Conflict happens when two agents take the same direction at a given timestep.
+        /// </summary>
+        /// We have to remember the destination vertex of each conflicting agent to be able to 
+        /// the corresponding issue constraints.
+        public override Conflict Check(Solution solution, int timestep) {
+            Dictionary<Edge, int> occupiedEdges = new Dictionary<Edge, int>();
+            for (int agent = 0; agent < solution.AgentCount; agent++) {
+                Path agentPath = solution.GetPath(agent);
+                if (timestep < agentPath.edgePath.Count) {
+                    Edge currentEdge = agentPath.edgePath[timestep];
+                    if (!occupiedEdges.TryAdd(currentEdge, agent)) {
+                        return new EdgeConflict(currentEdge, timestep, agent, occupiedEdges[currentEdge]);
+                    }
+                }
+            }
+            return null;
+        }
+    }
+
     public class CardinalConflictChecker : ConflictChecker {
 
         /// <summary>
@@ -70,7 +91,7 @@ namespace search.cbs {
                 Path agentPath = solution.GetPath(agent);
                 if (timestep < agentPath.edgePath.Count) {
                     Edge currentEdge = agentPath.edgePath[timestep];
-                    CardinalDirection direction = this.ComputeDirection(currentEdge);
+                    CardinalDirection direction = currentEdge.ComputeDirection();
                     if (directionTaken.ContainsKey(direction)) {
                         int conflictingAgent = directionTaken[direction];
                         return new CardinalConflict(conflictingAgent, agent, direction, timestep + 1);
@@ -79,26 +100,6 @@ namespace search.cbs {
                 }
             }
             return null;
-        }
-
-
-        private CardinalDirection ComputeDirection(Edge e) {
-            GridVertex src = (GridVertex)e.start;
-            GridVertex dst = (GridVertex)e.neighbour;
-            int delta_i = dst.i - src.i;
-            if (delta_i == 1) {
-                return CardinalDirection.South;
-            } else if (delta_i == -1) {
-                return CardinalDirection.North;
-            } else {
-                int delta_j = dst.j - src.j;
-                if (delta_j == 1) {
-                    return CardinalDirection.East;
-                } else if (delta_j == -1) {
-                    return CardinalDirection.West;
-                }
-            }
-            return CardinalDirection.None;
         }
     }
 }
