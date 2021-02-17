@@ -1,4 +1,5 @@
 using graph;
+using System;
 using System.Collections.Generic;
 
 namespace search.cbs {
@@ -92,11 +93,10 @@ namespace search.cbs {
                 if (timestep < agentPath.edgePath.Count) {
                     Edge currentEdge = agentPath.edgePath[timestep];
                     CardinalDirection direction = currentEdge.ComputeDirection();
-                    if (directionTaken.ContainsKey(direction)) {
+                    if (!directionTaken.TryAdd(direction, agent)) {
                         int conflictingAgent = directionTaken[direction];
                         return new CardinalConflict(conflictingAgent, agent, direction, timestep + 1);
                     }
-                    directionTaken.Add(direction, agent);
                 }
             }
             return null;

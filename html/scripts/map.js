@@ -35,8 +35,8 @@ class GraphMap {
         this.pathRequest = new PathRequest();
     }
 
-    addArrow(start, end) {
-        this.pathRequest.addPath(new Coordinate(start.x, start.y), new Coordinate(end.x, end.y));
+    addPath(index, start, end) {
+        this.pathRequest.addPath(index, new Coordinate(start.x, start.y), new Coordinate(end.x, end.y));
         this.draw(true);
     }
 

@@ -144,7 +144,6 @@ namespace tests {
             Assert.IsNotNull(sol);
         }
 
-
         public void PathWithConstraintThatMakesAstarReturnNull() {
             // TODO
         }
