@@ -32,7 +32,8 @@ namespace search {
                 currentPath = openSet.Pop();
                 foreach (var edge in currentPath.vertex.GetEdges()) {
                     Path neighbourPath = new Path(currentPath, edge, graph.HCost(edge.neighbour, destination));
-                    if (!constraints.Contains(neighbourPath.ToConstraint())) {
+                    //                    if (!constraints.Overlaps(neighbourPath.ToConstraints()))
+                    if (!constraints.Overlaps(neighbourPath.ToConstraints())) {
                         // The path to the neighbour will be considered either if it is unknown or if it has a lower cost than the previously known one
                         if (!bestPaths.ContainsKey(neighbourPath.vertex)) {
                             bestPaths.Add(neighbourPath.vertex, neighbourPath);
@@ -76,7 +77,7 @@ namespace search {
                 currentNode = openSet.Dequeue();
                 foreach (var edge in currentNode.path.vertex.GetEdges()) {
                     Path neighbourPath = new Path(currentNode.path, edge, graph.HCost(edge.neighbour, destination));
-                    if (!constraints.Contains(neighbourPath.ToConstraint())) {
+                    if (!constraints.Overlaps(neighbourPath.ToConstraints())) {
                         // The path to the neighbour will be considered either if it is unknown or if it has a lower cost than the previously known one
                         AstarNode neighbourNode;
                         if (!bestPaths.ContainsKey(neighbourPath.vertex)) {

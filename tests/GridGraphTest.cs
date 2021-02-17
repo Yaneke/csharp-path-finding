@@ -1,8 +1,9 @@
 using graph;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using search;
 
 
-namespace search {
+namespace tests {
     [TestClass]
     public class GridGraphTest {
         [TestMethod]
@@ -43,7 +44,7 @@ namespace search {
             Assert.AreEqual(3, g.GetVertexAt(0, 7).GetEdges().Count);
             Assert.AreEqual(4, g.GetVertexAt(4, 2).GetEdges().Count);
 
-            GridGraph g2 = new GridGraph("../../../data/Boston_0_256.map", false);
+            GridGraph g2 = new GridGraph("../../../data/Boston_0_256.map");
             Assert.AreEqual(2, g2.GetVertexAt(0, 20).GetEdges().Count);
         }
 

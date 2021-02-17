@@ -3,9 +3,10 @@ using System;
 using graph;
 using search;
 using search.cbs;
+using data_structures;
 
 
-namespace data_structures {
+namespace tests {
     [TestClass]
     public class HeapTests {
         [TestMethod]

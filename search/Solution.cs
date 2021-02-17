@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using graph;
 using System;
+using search.cbs;
 
 
 namespace search {
@@ -16,6 +17,9 @@ namespace search {
                 }
                 return res;
             }
+        }
+        public int AgentCount {
+            get => this.agentsPaths.Count;
         }
 
         public Solution Clone() {
@@ -51,16 +55,17 @@ namespace search {
             return this.agentsPaths;
         }
 
-        public bool IsValid() {
-            return this.GetFirstConflict() == null;
+        public bool IsValid(HashSet<ConflictChecker> checkers) {
+            return this.GetFirstConflict(checkers) == null;
         }
 
         /// <summary>
-        /// Find the first conflict in a solution if any. Returns null if none.
+        /// Find the first conflict in a solution if any. Returns null otherwise.
         /// </summary>
         /// NB: This is implemented in a rather non-intuitive manner in order to spot 
         /// conflicts as soon as possible.
-        public Conflict GetFirstConflict() {
+        public Conflict GetFirstConflict(HashSet<ConflictChecker> checkers) {
+            // TODO: include this check in the vertex checks
             // Check initial positions
             Dictionary<Vertex, int> previousVertices = new Dictionary<Vertex, int>();
             for (int agent = 0; agent < this.agentsPaths.Count; agent++) {
@@ -79,27 +84,42 @@ namespace search {
                     nsteps = path.edgePath.Count;
                 }
             }
+
             // For each time step.
             for (int t = 0; t < nsteps; t++) {
-                Dictionary<Vertex, int> currentVertices = new Dictionary<Vertex, int>();
-                // For each agent
-                for (int agent = 0; agent < this.agentsPaths.Count; agent++) {
-                    Path path = this.agentsPaths[agent];
-                    if (path != null && t < path.edgePath.Count) {
-                        Vertex vertex = path.edgePath[t].neighbour;
-                        // If the destination vertex is already occupied at time t+1, then there is a conflict at time t+1.
-                        if (currentVertices.ContainsKey(vertex)) {
-                            return new VertexConflict(vertex, t + 1, agent, currentVertices[vertex]);
-                        }
-                        // If the destination vertex was already occupied at time t and we move to it at t+1, then there is a conflict at time t+1.
-                        if (previousVertices.ContainsKey(vertex) && previousVertices[vertex] != agent) {
-                            return new FollowingConflict(vertex, t + 1, previousVertices[vertex], agent);
-                        }
-                        currentVertices[vertex] = agent;
+                foreach (var checker in checkers) {
+                    Conflict c = checker.Check(this, t);
+                    if (c != null) {
+                        return c;
                     }
-                    // TODO: check for edge conflicts
                 }
-                previousVertices = currentVertices;
+                // Dictionary<Vertex, int> currentVertices = new Dictionary<Vertex, int>();
+                // Dictionary<CardinalDirection, int> directionsByAgent = new Dictionary<CardinalDirection, int>();
+                // // For each agent
+                // for (int agent = 0; agent < this.agentsPaths.Count; agent++) {
+                //     Path path = this.agentsPaths[agent];
+                //     if (path != null && t < path.edgePath.Count) {
+                //         Edge currentEdge = path.edgePath[t];
+                //         Vertex currentVertex = currentEdge.neighbour;
+                //         // If the destination vertex is already occupied at time t+1, then there is a conflict at time t+1.
+                //         if (currentVertices.ContainsKey(currentVertex)) {
+                //             return new VertexConflict(currentVertex, t + 1, agent, currentVertices[currentVertex]);
+                //         }
+                //         // If the destination vertex was already occupied at time t and we move to it at t+1, then there is a following conflict at time t+1.
+                //         if (previousVertices.ContainsKey(currentVertex) && previousVertices[currentVertex] != agent) {
+                //             return new FollowingConflict(currentVertex, t + 1, previousVertices[currentVertex], agent);
+                //         }
+                //         // CardinalDirection direction = this.ComputeDirection(currentEdge);
+                //         // if (direction != CardinalDirection.None && directionsByAgent.ContainsKey(direction)) {
+                //         //     int conflictingAgent = directionsByAgent[direction];
+                //         //     Vertex agentDestination = this.agentsPaths[conflictingAgent].edgePath[t].neighbour;
+                //         //     return new CardinalConflict(agent, currentVertex, conflictingAgent, agentDestination, t + 1, direction);
+                //         // }
+                //         // directionsByAgent.Add(direction, agent);
+                //         currentVertices[currentVertex] = agent;
+                //     }
+                // }
+                // previousVertices = currentVertices;
             }
             return null;
         }

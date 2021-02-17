@@ -10,9 +10,6 @@ namespace search.cbs {
             this.solution = solution;
         }
 
-        public bool IsGoal() {
-            return this.solution.IsValid();
-        }
 
         /// A node is smaller when its cost is lower than the other.
         /// In case of ties, the node with lowest number of constraints is considered to be lower.

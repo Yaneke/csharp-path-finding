@@ -7,9 +7,9 @@ namespace graph {
         public int ColCount { get; set; }
         public int RowCount { get; set; }
 
-        public GridGraph(string fileName) : this(fileName, false) { }
+        public GridGraph(string fileName) : this(fileName, false, 0) { }
 
-        public GridGraph(string fileName, bool withEdgeLoop) : base() {
+        public GridGraph(string fileName, bool withEdgeLoop, int loopCost) : base() {
             this.grid = new List<List<GridVertex>>();
             string[] lines = System.IO.File.ReadAllLines(fileName);
             this.RowCount = int.Parse(lines[1].Split(" ")[1]);
@@ -36,7 +36,7 @@ namespace graph {
                     if (v != null) {
                         this.Add(v, i, j);
                         if (withEdgeLoop) {
-                            v.AddNeighbour(v, 0);
+                            v.AddNeighbour(v, loopCost);
                         }
                         if (i > 0) {// north
                             v.AddNeighbour(this.grid[i - 1][j], 1);

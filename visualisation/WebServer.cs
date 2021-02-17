@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Net;
@@ -10,8 +11,8 @@ using search.cbs;
 namespace visualisation {
     class HttpServer {
         private HttpListener listener;
-        private bool runServer;
         private GridGraph map;
+        private CBS cbs;
         //private PathPlanning.Example.Graph map;
 
 
@@ -23,9 +24,8 @@ namespace visualisation {
 
 
         public void HandleIncomingConnections() {
-            this.runServer = true;
             // While a user hasn't visited the `shutdown` url, keep on handling requests
-            while (this.runServer) {
+            while (true) {
                 // Will wait here until we hear from a connection
                 HttpListenerContext ctx = this.listener.GetContext();
                 string log = "[" + ctx.Request.HttpMethod + "] " + ctx.Request.Url.AbsolutePath;
@@ -83,7 +83,7 @@ namespace visualisation {
             string fileName = "data/" + req.QueryString["map"];
             resp.OutputStream.Write(File.ReadAllBytes(fileName));
             //this.map = Parser.ParseFile(fileName);
-            this.map = new GridGraph(fileName, true);
+            this.map = new GridGraph(fileName, true, 0);
         }
 
         private string ReadPostData(HttpListenerRequest req) {
@@ -92,15 +92,41 @@ namespace visualisation {
             }
         }
 
+
+        private void UpdateConstraints(HttpListenerRequest req, HttpListenerResponse resp) {
+            string data = this.ReadPostData(req);
+            try {
+                data_objects.ConstraintUpdate constraintUpdate = JsonSerializer.Deserialize<data_objects.ConstraintUpdate>(data);
+                this.cbs = new CBS();
+                if (constraintUpdate.cardinal) {
+                    this.cbs.WithCardinalConflicts();
+                }
+                if (constraintUpdate.following) {
+                    this.cbs.WithFollowingConflicts();
+                }
+                if (constraintUpdate.vertex) {
+                    this.cbs.WithVertexConflicts();
+                }
+                resp.ContentLength64 = 0;
+                resp.ContentType = "plain";
+            }
+            catch (System.Text.Json.JsonException) {
+                resp.StatusCode = (int)HttpStatusCode.BadRequest;
+            }
+        }
+
         private void GetPath(HttpListenerRequest req, HttpListenerResponse resp) {
             try {
-                string data = ReadPostData(req);
+                string data = this.ReadPostData(req);
                 Console.WriteLine(data);
                 data_objects.PathRequestDO pathRequests = JsonSerializer.Deserialize<data_objects.PathRequestDO>(data);
                 List<Vertex> sources = pathRequests.GetSources(this.map);
                 List<Vertex> destinations = pathRequests.GetDestinations(this.map);
-                search.Solution sol = CBS.ShortestPath(this.map, sources, destinations);
-                var res = new data_objects.PathAnswerDO(sol);
+                Stopwatch sw = new Stopwatch();
+                sw.Start();
+                search.Solution sol = this.cbs.ShortestPath(this.map, sources, destinations);
+                sw.Stop();
+                var res = new data_objects.PathAnswerDO(sol, sw.ElapsedMilliseconds);
                 byte[] responseData = JsonSerializer.SerializeToUtf8Bytes(res);
                 resp.ContentType = "text/json";
                 resp.ContentLength64 = responseData.LongLength;
@@ -110,25 +136,6 @@ namespace visualisation {
             catch (System.Text.Json.JsonException) {
                 resp.StatusCode = (int)HttpStatusCode.BadRequest;
             }
-            /*
-            int xPathStart = int.Parse(req.QueryString["pathStart[x]"]);
-            int yPathStart = int.Parse(req.QueryString["pathStart[y]"]);
-            int xPathEnd = int.Parse(req.QueryString["pathEnd[x]"]);
-            int yPathEnd = int.Parse(req.QueryString["pathEnd[y]"]);
-            map.AddPawn("P", new Coord(xPathStart, yPathStart), new Coord(xPathEnd, yPathEnd));
-
-            var tree = new PathPlanning.Search.CBSTree(map);
-            var solution = tree.Search().First();
-            var path = solution.GetPaths("P").First();
-            var pathString = path.Select((IVertex vertex, int _) =>
-            {
-                var coord = vertex.GetCoordinates();
-                return coord.Y + ", " + coord.X; // TODO maybe use usual order (X, Y)
-            });
-
-            resp.ContentType = "text/json";
-            resp.OutputStream.Write(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(pathString.ToList())));
-            */
         }
 
         private void dispatch(HttpListenerRequest req, HttpListenerResponse resp) {
@@ -150,6 +157,9 @@ namespace visualisation {
                     switch (req.Url.AbsolutePath) {
                         case "/getPath":
                             this.GetPath(req, resp);
+                            break;
+                        case "/constraints":
+                            this.UpdateConstraints(req, resp);
                             break;
                         default:
                             break;

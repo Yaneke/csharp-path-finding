@@ -1,29 +1,55 @@
 using graph;
 using data_structures;
 using System.Collections.Generic;
+using System;
 
 namespace search.cbs {
     public class CBS {
-        public static Solution ShortestPath(Graph graph, List<Vertex> sources, List<Vertex> destinations) {
-            // TODO: check #sources == #destinations
-            ConstraintSet constraints = new ConstraintSet();
-            Solution solution = CBS.LowLevelSearch(graph, sources, destinations, constraints);
-            CBSNode root = new CBSNode(constraints, solution);
+
+        private HashSet<ConflictChecker> checkers;
+
+        public CBS() {
+            this.checkers = new HashSet<ConflictChecker>();
+        }
+
+        public CBS WithVertexConflicts() {
+            this.checkers.Add(new VertexConflictChecker());
+            return this;
+        }
+
+        public CBS WithFollowingConflicts() {
+            this.checkers.Add(new FollowingConflictChecker());
+            return this;
+        }
+
+        public CBS WithCardinalConflicts() {
+            this.checkers.Add(new CardinalConflictChecker());
+            return this;
+        }
+
+        public static CBS Default() {
+            return new CBS().WithFollowingConflicts().WithVertexConflicts();
+        }
+
+        public Solution ShortestPath(Graph graph, List<Vertex> sources, List<Vertex> destinations) {
+            ConstraintSet emptyConstraints = new ConstraintSet();
+            Solution solution = CBS.LowLevelSearch(graph, sources, destinations, emptyConstraints);
+            CBSNode root = new CBSNode(emptyConstraints, solution);
             Heap<CBSNode> ct = new Heap<CBSNode>();
             ct.Add(root);
             do {
                 CBSNode bestNode = ct.Pop();
-                Conflict conflict = bestNode.solution.GetFirstConflict();
+                Conflict conflict = bestNode.solution.GetFirstConflict(this.checkers);
+                Console.WriteLine(conflict);
                 if (conflict == null) { // No conflict -> found a solution
                     return bestNode.solution;
                 }
-                // TODO: check if the conflict should merge with an existing one? Does it work with the heap?
                 // For each agent in the conflict, create a new node.
                 foreach (int agent in conflict.GetAgents()) {
-                    constraints = bestNode.constraints.Clone();
+                    ConstraintSet constraints = bestNode.constraints.Clone();
                     var cons = conflict.GetConstraint(agent);
                     if (cons != null) {
-                        constraints.Add(cons);
+                        constraints.Add(cons, agent);
                         solution = CBS.LowLevelSearch(graph, sources[agent], destinations[agent], constraints.GetConstraints(agent), bestNode.solution, agent);
                         if (solution != null) {
                             ct.Add(new CBSNode(constraints, solution));
@@ -31,9 +57,10 @@ namespace search.cbs {
                     }
                 }
             } while (ct.Count > 0);
-
             return null;
         }
+
+
 
         private static Solution LowLevelSearch(Graph graph, List<Vertex> sources, List<Vertex> destinations, ConstraintSet constraints) {
             Solution s = new Solution();
@@ -47,7 +74,7 @@ namespace search.cbs {
 
         private static Solution LowLevelSearch(Graph graph, Vertex source, Vertex destination, HashSet<Constraint> constraints, Solution partialSolution, int agent) {
             Solution s = partialSolution.Clone();
-            s.ReplacePath(agent, Astar.FastShortestPath(graph, source, destination, constraints));
+            s.ReplacePath(agent, Astar.ShortestPath(graph, source, destination, constraints));
             return s;
         }
     }

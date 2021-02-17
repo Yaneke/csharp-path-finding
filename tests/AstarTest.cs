@@ -3,7 +3,7 @@ using search;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 
-namespace search {
+namespace tests {
     [TestClass]
     public class AstarTest {
         [TestMethod]

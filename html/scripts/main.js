@@ -41,6 +41,8 @@ window.onload = function () {
     resetMeta();
     resetMode();
 
+    $("input[type=checkbox].constraint").on("click", updateConflicts);
+    updateConflicts(null);
 
 
     $("#xPathStart").on("change", function () {
@@ -63,7 +65,23 @@ window.onload = function () {
     $.get("maps", loadMapList); // Load the maps in the select, forces redraw (see function above)
 
     $("#getPathButton").on("click", function () {
-        $.post("/getPath", JSON.stringify(map.getPathRequests()), map.drawPathAnswer);
+        $.post("/getPath", JSON.stringify(map.getPathRequests()), function (res) {
+            map.drawPathAnswer(res);
+            console.log(res);
+            $("#computationTime").val(res.duration);
+            $("#solutionCost").val(res.cost);
+            let tbody = $("#result_tbody");
+            tbody.html("");
+            let i = 0;
+            res.paths.forEach(path => {
+                let coordPath = "";
+                path.coordinates.forEach(coord => {
+                    coordPath += "(" + coord.x + ", " + coord.y + ")-> ";
+                });
+                let row = "<tr> <td> " + i++ + "</td> <td> " + path.coordinates.length + "</td> <td>" + coordPath + "</td> </tr>";
+                tbody.append(row);
+            });
+        });
     });
 
     $("#resetPathButton").on("click", function () { map.resetPaths(); });
@@ -168,6 +186,14 @@ window.onload = function () {
     });
 };
 
+
+function updateConflicts(_event) {
+    let data = {};
+    $("input[type=checkbox].constraint").each(function () {
+        data[this.name] = this.checked;
+    });
+    $.post("/constraints", JSON.stringify(data), function () { });
+}
 
 function resetZoom() {
     zoomLevel = zoomMin;

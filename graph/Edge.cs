@@ -11,6 +11,25 @@ namespace graph {
             this.cost = cost;
         }
 
+        public CardinalDirection ComputeDirection() {
+            GridVertex src = (GridVertex)this.start;
+            GridVertex dst = (GridVertex)this.neighbour;
+            int delta_i = dst.i - src.i;
+            if (delta_i == 1) {
+                return CardinalDirection.South;
+            } else if (delta_i == -1) {
+                return CardinalDirection.North;
+            } else {
+                int delta_j = dst.j - src.j;
+                if (delta_j == 1) {
+                    return CardinalDirection.East;
+                } else if (delta_j == -1) {
+                    return CardinalDirection.West;
+                }
+            }
+            return CardinalDirection.None;
+        }
+
         public override string ToString() {
             return this.start.ToString() + "->" + this.neighbour.ToString();
         }
@@ -28,22 +47,4 @@ namespace graph {
             return this.cost == other.cost && this.start.Equals(other.start) && this.neighbour.Equals(other.neighbour);
         }
     }
-
-    /*
-    public class BidirectionalEdge : Edge {
-        public BidirectionalEdge(Vertex v1, Vertex v2, float cost) : base(v1, v2, cost) { }
-
-        public override bool Equals(object obj) {
-            if (obj == null || this.GetType() != obj.GetType()) {
-                return false;
-            }
-            Edge other = (Edge)obj;
-            return this.cost == other.cost && ((this.start.Equals(other.start) && this.neighbour.Equals(other.neighbour)) || this.start.Equals(other.neighbour) && this.neighbour.Equals(other.start));
-        }
-
-        public override int GetHashCode() {
-            return base.GetHashCode();
-        }
-    }
-    */
 }
