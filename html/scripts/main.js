@@ -22,12 +22,9 @@ window.onload = function () {
         step: 1,
         value: zoomMin,
         animate: "fast",
-        slide: function (_, ui) {
+        slide: function (_event, ui) {
             document.getElementById("zoomLabel").innerHTML = ("Scale: " + ui.value);
             zoomMapTo(ui.value);
-        },
-        change: function (_, ui) {
-            document.getElementById("zoomLabel").innerHTML = ("Scale: " + ui.value);
         }
     });
 
@@ -35,7 +32,6 @@ window.onload = function () {
     context = canvas[0].getContext("2d");
     map = new GraphMap(context);
     trackTransforms(context);
-
     mapselect = $("#mapselect");
 
     resetMeta();
@@ -57,6 +53,8 @@ window.onload = function () {
     $("#yPathEnd").on("change", function () {
         pathEnd.y = $(this).val();
     });
+
+    $("#addPathBtn").on("click", addPathColumn);
 
     mapselect.on("change", function () {
         loadMap();
@@ -84,7 +82,10 @@ window.onload = function () {
         });
     });
 
-    $("#resetPathButton").on("click", function () { map.resetPaths(); });
+    $("#resetPathButton").on("click", function () {
+        map.resetPaths();
+        resetPathTable();
+    });
 
     // --- KEY & MOUSE BINDINGS ---
 
@@ -110,18 +111,17 @@ window.onload = function () {
         mouseMoved = false;
         if (cntrlIsPressed) {
             // Moving the mouse will drag, releasing it without moving will zoom (dezoom if shift is pressed)
-            console.log("Cntrl+mousedown: enter dragZoomMode");
             dragZoomMode = true;
             dragStart = { x: mousePosRaw.x, y: mousePosRaw.y };
             dragMapIntervalID = setInterval(whileDraggingMap, 50);
         } else {
             // Start drawing a line from start point to the current mouse position.
-            console.log("mousedown: enter addPathMode")
             addPathMode = true;
             mouseMoved = true; // forces arrow to be drawn at beginning
             pathStart = new Coordinate(mousePos.x, mousePos.y);
-            $("#xPathStart").val(pathStart.x);
-            $("#yPathStart").val(pathStart.y);
+            let [srcx, srcy] = $("#sources td:last").children();
+            srcx.value = mousePos.x;
+            srcy.value = mousePos.y;
             drawPathIntervalID = setInterval(whileAddingPath, 50);
         }
     });
@@ -139,19 +139,29 @@ window.onload = function () {
             } else {
                 zoomMap(event.shiftKey ? -1 : 1);
             }
-            console.log("Cntrl+mouseup: exit dragZoomMode");
         }
         if (addPathMode) {
             clearInterval(drawPathIntervalID);
             mouseMoved = true; // forces to draw last line (in case mouse moved but interval did not trigger)
             whileAddingPath();
             pathEnd = new Coordinate(mousePos.x, mousePos.y);
-            map.addArrow(pathStart, pathEnd);
-            $("#xPathEnd").val(mousePos.x);
-            $("#yPathEnd").val(mousePos.y);
-            console.log("mouseup: exit addPathMode")
+            let [dstx, dsty] = $("#destinations td:last").children();
+            dstx.value = mousePos.x;
+            dsty.value = mousePos.y;
+            $(dsty).trigger("change");
+            addPathColumn();
         }
         resetMode();
+    });
+
+    $("#sources, #destinations").on("change", "input", function () {
+        let agentNum = parseInt(this.id.substring(4));
+        let srcx = $("#srcx" + agentNum).val() || 0;
+        let srcy = $("#srcy" + agentNum).val() || 0;
+        let dstx = $("#dstx" + agentNum).val() || 0;
+        let dsty = $("#dsty" + agentNum).val() || 0;
+        console.log("Updating path number " + agentNum);
+        map.addPath(agentNum, new Coordinate(srcx, srcy), new Coordinate(dstx, dsty));
     });
 
     canvas.on("mouseout", function () {
@@ -166,17 +176,17 @@ window.onload = function () {
 
     $(".map.pane").resizable({
         handles: "e, w",
-        stop: function (event, ui) {
+        stop: function (_event, ui) {
             setWidthInPercent(ui.element);
         }
 
     });
     $(".path.pane").resizable({
         handles: "e, w",
-        resize: function (event, ui) {
+        resize: function (_event, ui) {
             ui.position.left = 0;
         },
-        stop: function (event, ui) {
+        stop: function (_event, ui) {
             setWidthInPercent(ui.element);
         }
     });
@@ -207,6 +217,7 @@ function resetMeta() {
     $("#yPathStart").val("");
     $("#xPathEnd").val("");
     $("#yPathEnd").val("");
+    resetPathTable();
     mousePos = new Coordinate();
     mousePosRaw = new Coordinate();
     pathStart = new Coordinate();
@@ -227,10 +238,6 @@ function resetMode() {
 }
 
 function updateMousePos(event) {
-    // Alternative for computing position
-    // const rect = canvas[0].getBoundingClientRect();
-    // var lastX = event.clientX - rect.left;
-    // var lastY = event.clientY - rect.top;
     var lastX = (event.offsetX || (event.pageX - canvas[0].offsetLeft));
     var lastY = (event.offsetY || (event.pageY - canvas[0].offsetTop));
 
@@ -249,7 +256,6 @@ function updateMousePos(event) {
 function whileAddingPath() {
     if (mouseMoved) {
         mouseMoved = false;
-        console.log("Moved path arrow.");
         pathEnd.x = mousePos.x;
         pathEnd.y = mousePos.y
         map.draw();
@@ -284,7 +290,6 @@ function loadMap() {
         map.setWidth(lines[2].split(" ")[1]);
         map.setHeight(lines[1].split(" ")[1]);
         map.setData(lines.slice(4, lines.length));
-
         resizeCanvas(true);
         map.draw();
     });
@@ -296,7 +301,6 @@ function resizeCanvas(resetTransform = false) {
         prevCenter = context.transformedPoint(canvas[0].width / 2, canvas[0].height / 2);
         prevZoom = zoomLevel;
     }
-
     resetZoom();
 
     context.setTransform(1, 0, 0, 1, 0, 0);
@@ -312,7 +316,6 @@ function resizeCanvas(resetTransform = false) {
 };
 
 // ----- MAP ZOOM & TRANSLATE -----
-
 function translateBounded(trans) {
     var topLeftBound = context.transformedPoint(0, 0);
     var botRightBound = context.transformedPoint(canvas[0].width, canvas[0].height);

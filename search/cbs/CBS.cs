@@ -27,8 +27,13 @@ namespace search.cbs {
             return this;
         }
 
+        public CBS WithEdgeConflicts() {
+            this.checkers.Add(new EdgeConflictChecker());
+            return this;
+        }
+
         public static CBS Default() {
-            return new CBS().WithFollowingConflicts().WithVertexConflicts();
+            return new CBS().WithFollowingConflicts().WithVertexConflicts().WithEdgeConflicts();
         }
 
         public Solution ShortestPath(Graph graph, List<Vertex> sources, List<Vertex> destinations) {
@@ -61,11 +66,44 @@ namespace search.cbs {
         }
 
 
+        public IEnumerable<CBSNode> EnumerateCBSOrder(Graph graph, List<Vertex> sources, List<Vertex> destinations) {
+            ConstraintSet emptyConstraints = new ConstraintSet();
+            Solution solution = CBS.LowLevelSearch(graph, sources, destinations, emptyConstraints);
+            CBSNode root = new CBSNode(emptyConstraints, solution);
+            Heap<CBSNode> ct = new Heap<CBSNode>();
+            ct.Add(root);
+            do {
+                CBSNode bestNode = ct.Pop();
+                yield return bestNode;
+                Conflict conflict = bestNode.solution.GetFirstConflict(this.checkers);
+                Console.WriteLine(conflict);
+                if (conflict == null) { // No conflict -> found a solution
+                    break;
+                }
+                // For each agent in the conflict, create a new node.
+                foreach (int agent in conflict.GetAgents()) {
+                    ConstraintSet constraints = bestNode.constraints.Clone();
+                    var cons = conflict.GetConstraint(agent);
+                    if (cons != null) {
+                        constraints.Add(cons, agent);
+                        solution = CBS.LowLevelSearch(graph, sources[agent], destinations[agent], constraints.GetConstraints(agent), bestNode.solution, agent);
+                        if (solution != null) {
+                            ct.Add(new CBSNode(constraints, solution));
+                        }
+                    }
+                }
+            } while (ct.Count > 0);
+        }
+
+
 
         private static Solution LowLevelSearch(Graph graph, List<Vertex> sources, List<Vertex> destinations, ConstraintSet constraints) {
             Solution s = new Solution();
             for (int i = 0; i < sources.Count; i++) {
                 Path path = Astar.ShortestPath(graph, sources[i], destinations[i], constraints.GetConstraints(i));
+                if (path == null) {
+                    return null;
+                }
                 s.Add(path);
             }
             return s;
@@ -74,7 +112,11 @@ namespace search.cbs {
 
         private static Solution LowLevelSearch(Graph graph, Vertex source, Vertex destination, HashSet<Constraint> constraints, Solution partialSolution, int agent) {
             Solution s = partialSolution.Clone();
-            s.ReplacePath(agent, Astar.ShortestPath(graph, source, destination, constraints));
+            Path newPath = Astar.ShortestPath(graph, source, destination, constraints);
+            if (newPath == null) {
+                return null;
+            }
+            s.ReplacePath(agent, newPath);
             return s;
         }
     }

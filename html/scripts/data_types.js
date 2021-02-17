@@ -4,8 +4,8 @@ class Coordinate {
      * @param {Number} y 
      */
     constructor(x = NaN, y = NaN) {
-        this.x = x;
-        this.y = y;
+        this.x = parseInt(x);
+        this.y = parseInt(y);
     }
 
     to_ij() {
@@ -23,12 +23,18 @@ class PathRequest {
     }
 
     /**
-     * @param {Coordinate} start
-     * @param {Coordinate} end
-     */
-    addPath(start, end) {
-        this.start.push(start);
-        this.end.push(end);
+    * @param {Number} index
+    * @param {Coordinate} start
+    * @param {Coordinate} end
+    */
+    addPath(index, start, end) {
+        if (index < this.length()) {
+            this.start[index] = start;
+            this.end[index] = end;
+        } else {
+            this.start.push(start);
+            this.end.push(end);
+        }
     }
 
     length() {

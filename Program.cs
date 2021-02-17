@@ -3,12 +3,20 @@ using System.Collections.Generic;
 using visualisation;
 using Benchmarks;
 using BenchmarkDotNet.Running;
+using graph;
+using search;
+using search.cbs;
 
 namespace pathfinding {
     class Program {
         static void Main(string[] args) {
             if (args.Length == 0 || args[0] == "runserver") {
                 RunServer();
+            } else if (args[0] == "tmp") {
+                GridGraph g = new GridGraph("data/Boston_0_256.map");
+                List<Vertex> sources = new List<Vertex> { g.GetVertexAt(49, 182), g.GetVertexAt(41, 165) };
+                List<Vertex> destinations = new List<Vertex> { g.GetVertexAt(30, 218), g.GetVertexAt(25, 204) };
+                Solution sol = new CBS().WithCardinalConflicts().ShortestPath(g, sources, destinations);
             } else if (args[0] == "benchmark") {
                 RunBenchmarks(args);
             } else {

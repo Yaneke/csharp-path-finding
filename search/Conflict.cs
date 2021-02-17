@@ -92,30 +92,33 @@ namespace search {
 
     /// When Agent 1 is at vertex V1 at time t-1 and Agent 2 is at V1 at time t.
     public class EdgeConflict : Conflict {
-        public int leaving_agent { get; }
-        public int following_agent { get; }
+        public int agent1 { get; }
+        public int agent2 { get; }
         public Edge edge { get; }
 
-        public EdgeConflict(Edge edge, int timestep, int leaving_agent, int following_agent) : base(timestep) {
+        public EdgeConflict(Edge edge, int timestep, int agent1, int agent2) : base(timestep) {
             this.edge = edge;
-            this.leaving_agent = leaving_agent;
-            this.following_agent = following_agent;
+            this.agent1 = agent1;
+            this.agent2 = agent2;
         }
 
         public override List<int> GetAgents() {
             List<int> res = new List<int>();
-            res.Add(this.leaving_agent);
-            res.Add(this.following_agent);
+            res.Add(this.agent1);
+            res.Add(this.agent2);
             return res;
         }
 
         public override Constraint GetConstraint(int agent) {
-            throw new System.Exception("Not implemented!");
+            if (agent == this.agent1 || agent == this.agent2) {
+                return new Constraint(this.edge, this.timestep);
+            }
+            throw new System.Exception("The given agent is not part of the conflict!");
         }
 
 
         public override string ToString() {
-            return "Edge conflict for edge " + this.edge.ToString() + ": agent " + this.leaving_agent + " (leaving) and agent " + this.following_agent + "(following)";
+            return "Edge conflict for edge " + this.edge.ToString() + ": agent " + this.agent1 + " and agent " + this.agent2 + " at t=" + this.timestep;
         }
     }
 

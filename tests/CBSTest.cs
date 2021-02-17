@@ -135,6 +135,14 @@ namespace tests {
             Assert.IsNotNull(sol);
         }
 
+        [TestMethod]
+        public void CardinalConflicts_BigMap2() {
+            GridGraph g = new GridGraph("../../../data/Boston_0_256.map");
+            List<Vertex> sources = new List<Vertex> { g.GetVertexAt(49, 182), g.GetVertexAt(41, 165) };
+            List<Vertex> destinations = new List<Vertex> { g.GetVertexAt(30, 218), g.GetVertexAt(25, 204) };
+            Solution sol = new CBS().WithCardinalConflicts().ShortestPath(g, sources, destinations);
+            Assert.IsNotNull(sol);
+        }
 
         public void PathWithConstraintThatMakesAstarReturnNull() {
             // TODO
