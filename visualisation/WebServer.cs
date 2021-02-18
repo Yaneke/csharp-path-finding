@@ -13,7 +13,8 @@ namespace visualisation {
         private HttpListener listener;
         private GridGraph map;
         private CBS cbs;
-        //private PathPlanning.Example.Graph map;
+        private IEnumerator<CBSNode> cbsEnumerator;
+        private data_objects.PathRequestDO prevRequest;
 
 
         public HttpServer(string url) {
@@ -24,7 +25,6 @@ namespace visualisation {
 
 
         public void HandleIncomingConnections() {
-            // While a user hasn't visited the `shutdown` url, keep on handling requests
             while (true) {
                 // Will wait here until we hear from a connection
                 HttpListenerContext ctx = this.listener.GetContext();
@@ -78,17 +78,31 @@ namespace visualisation {
         }
 
 
-        private void GetSelectedMap(HttpListenerRequest req, HttpListenerResponse resp) {
+        private void UpdateMapSettings(HttpListenerRequest req, HttpListenerResponse resp) {
             resp.ContentType = "text/plain";
-            string fileName = "data/" + req.QueryString["map"];
+            string data = this.ReadPostData(req);
+            Console.WriteLine(data);
+            data_objects.MapSettings settings = JsonSerializer.Deserialize<data_objects.MapSettings>(data);
+            string fileName = "data/" + settings.map;
             resp.OutputStream.Write(File.ReadAllBytes(fileName));
-            //this.map = Parser.ParseFile(fileName);
             this.map = new GridGraph(fileName, true, 0);
         }
 
         private string ReadPostData(HttpListenerRequest req) {
             using (StreamReader reader = new StreamReader(req.InputStream, req.ContentEncoding)) {
                 return reader.ReadToEnd();
+            }
+        }
+
+        private void SetMapSettings(HttpListenerRequest req, HttpListenerResponse resp) {
+            string data = this.ReadPostData(req);
+            try {
+                data_objects.MapSettings constraintUpdate = JsonSerializer.Deserialize<data_objects.MapSettings>(data);
+                resp.ContentLength64 = 0;
+                resp.ContentType = "plain";
+            }
+            catch (System.Text.Json.JsonException) {
+                resp.StatusCode = (int)HttpStatusCode.BadRequest;
             }
         }
 
@@ -121,7 +135,6 @@ namespace visualisation {
         private void GetPath(HttpListenerRequest req, HttpListenerResponse resp) {
             try {
                 string data = this.ReadPostData(req);
-                Console.WriteLine(data);
                 data_objects.PathRequestDO pathRequests = JsonSerializer.Deserialize<data_objects.PathRequestDO>(data);
                 List<Vertex> sources = pathRequests.GetSources(this.map);
                 List<Vertex> destinations = pathRequests.GetDestinations(this.map);
@@ -139,6 +152,55 @@ namespace visualisation {
             catch (System.Text.Json.JsonException) {
                 resp.StatusCode = (int)HttpStatusCode.BadRequest;
             }
+            catch (System.Exception e) {
+                byte[] data = Encoding.UTF8.GetBytes(e.Message);
+                resp.ContentType = "text/plain";
+                resp.ContentLength64 = data.LongLength;
+                resp.ContentEncoding = Encoding.UTF8;
+                resp.StatusCode = (int)HttpStatusCode.BadRequest;
+                resp.OutputStream.Write(data);
+            }
+        }
+
+
+        private void GetPathStep(HttpListenerRequest req, HttpListenerResponse resp) {
+            try {
+                string data = this.ReadPostData(req);
+                data_objects.PathRequestDO pathRequests = JsonSerializer.Deserialize<data_objects.PathRequestDO>(data);
+                // If the request has changed, re-create the enumerator
+                if (this.prevRequest == null || !this.prevRequest.Equals(pathRequests)) {
+                    List<Vertex> sources = pathRequests.GetSources(this.map);
+                    List<Vertex> destinations = pathRequests.GetDestinations(this.map);
+                    this.cbsEnumerator = this.cbs.EnumerateCBSOrder(this.map, sources, destinations);
+                    this.prevRequest = pathRequests;
+                }
+                Stopwatch sw = new Stopwatch();
+                sw.Start();
+                if (!this.cbsEnumerator.MoveNext()) {
+                    this.cbsEnumerator = null;
+                    resp.ContentLength64 = 0;
+                } else {
+                    sw.Stop();
+                    var res = new data_objects.CBSNodeDO(this.cbs.checkers, this.cbsEnumerator.Current, sw.ElapsedMilliseconds);
+                    byte[] responseData = JsonSerializer.SerializeToUtf8Bytes(res);
+                    resp.ContentType = "text/json";
+                    resp.ContentLength64 = responseData.LongLength;
+                    resp.ContentEncoding = Encoding.UTF8;
+                    resp.OutputStream.Write(responseData);
+                }
+
+            }
+            catch (System.Text.Json.JsonException) {
+                resp.StatusCode = (int)HttpStatusCode.BadRequest;
+            }
+            catch (System.Exception e) {
+                byte[] data = Encoding.UTF8.GetBytes(e.Message);
+                resp.ContentType = "text/plain";
+                resp.ContentLength64 = data.LongLength;
+                resp.ContentEncoding = Encoding.UTF8;
+                resp.StatusCode = (int)HttpStatusCode.BadRequest;
+                resp.OutputStream.Write(data);
+            }
         }
 
         private void dispatch(HttpListenerRequest req, HttpListenerResponse resp) {
@@ -148,9 +210,6 @@ namespace visualisation {
                         case "/maps":
                             this.GetMaps(resp);
                             break;
-                        case "/getSelectedMap":
-                            this.GetSelectedMap(req, resp);
-                            break;
                         default:
                             this.ServeFile(req.Url.AbsolutePath, resp);
                             break;
@@ -158,11 +217,20 @@ namespace visualisation {
                     break;
                 case "POST":
                     switch (req.Url.AbsolutePath) {
+                        case "/updateMapSettings":
+                            this.UpdateMapSettings(req, resp);
+                            break;
                         case "/getPath":
                             this.GetPath(req, resp);
                             break;
+                        case "/getPathStep":
+                            this.GetPathStep(req, resp);
+                            break;
                         case "/constraints":
                             this.UpdateConstraints(req, resp);
+                            break;
+                        case "/mapSettings":
+                            this.SetMapSettings(req, resp);
                             break;
                         default:
                             break;

@@ -5,6 +5,8 @@ namespace search {
 
     public abstract class Conflict {
         public int timestep { get; }
+        public object constrainedObject { get; }
+        public int[] agents { get; }
 
         /// <summary> 
         /// Returns the list of agents involved in the conflict.
@@ -16,8 +18,10 @@ namespace search {
         /// </summary>
         public abstract Constraint GetConstraint(int agent);
 
-        public Conflict(int timestep) {
+        public Conflict(int timestep, object constrainedObject, int[] agents) {
             this.timestep = timestep;
+            this.constrainedObject = constrainedObject;
+            this.agents = agents;
         }
     }
 
@@ -26,7 +30,7 @@ namespace search {
         public int agent2 { get; }
         public Vertex vertex { get; }
 
-        public VertexConflict(Vertex vertex, int timestep, int agent1, int agent2) : base(timestep) {
+        public VertexConflict(Vertex vertex, int timestep, int agent1, int agent2) : base(timestep, vertex, new int[] { agent1, agent2 }) {
             this.vertex = vertex;
             this.agent1 = agent1;
             this.agent2 = agent2;
@@ -60,7 +64,7 @@ namespace search {
         public int following_agent { get; }
         public Vertex vertex { get; }
 
-        public FollowingConflict(Vertex vertex, int timestep, int leaving_agent, int following_agent) : base(timestep) {
+        public FollowingConflict(Vertex vertex, int timestep, int leaving_agent, int following_agent) : base(timestep, vertex, new int[] { leaving_agent, following_agent }) {
             this.vertex = vertex;
             this.leaving_agent = leaving_agent;
             this.following_agent = following_agent;
@@ -96,7 +100,7 @@ namespace search {
         public int agent2 { get; }
         public Edge edge { get; }
 
-        public EdgeConflict(Edge edge, int timestep, int agent1, int agent2) : base(timestep) {
+        public EdgeConflict(Edge edge, int timestep, int agent1, int agent2) : base(timestep, edge, new int[] { agent1, agent2 }) {
             this.edge = edge;
             this.agent1 = agent1;
             this.agent2 = agent2;
@@ -127,7 +131,7 @@ namespace search {
         public int agent2 { get; }
         public CardinalDirection direction { get; }
 
-        public CardinalConflict(int agent1, int agent2, CardinalDirection direction, int timestep) : base(timestep) {
+        public CardinalConflict(int agent1, int agent2, CardinalDirection direction, int timestep) : base(timestep, direction, new int[] { agent1, agent2 }) {
             this.agent1 = agent1;
             this.agent2 = agent2;
             this.direction = direction;

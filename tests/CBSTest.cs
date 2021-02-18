@@ -24,21 +24,21 @@ namespace tests {
         [TestMethod]
         public void ManyCardinalConflicts() {
             // In this situation, both agents have to go up all the time, hence many CardinalConflicts.
-            GridGraph g = new GridGraph("../../../data/empty-16-16.map");
+            GridGraph g = new GridGraph("../../../data/empty-16-16.map", true, 0);
             List<Vertex> sources = new List<Vertex>();
             List<Vertex> destinations = new List<Vertex>();
             sources.Add(g.GetVertexAt(0, 0));
             sources.Add(g.GetVertexAt(1, 0));
             destinations.Add(g.GetVertexAt(0, 5));
             destinations.Add(g.GetVertexAt(1, 5));
-            Solution s = CBS.Default().ShortestPath(g, sources, destinations);
+            Solution s = new CBS().WithCardinalConflicts().ShortestPath(g, sources, destinations);
             int totalLength = 0;
             foreach (Path p in s.GetPaths()) {
                 totalLength += p.edgePath.Count;
             }
             Assert.AreEqual(10, s.cost);
-            // Expected total length is 10: 5 time steps for the first and 5 for the second agent
-            Assert.AreEqual(10, totalLength);
+            // Expected total length is 10: 5 time steps for the first and 10 for the second agent
+            Assert.AreEqual(15, totalLength);
         }
 
 

@@ -40,21 +40,23 @@ window.onload = function () {
     $("input[type=checkbox].constraint").on("click", updateConflicts);
     updateConflicts(null);
 
+    $("#selfLoop, #selfLoopCost").on("change", function () {
+        if (this.type == "checkbox") {
+            $("#selfLoopCost").prop("disabled", !this.checked);
+        }
+        $.post("/updateMapSettings", JSON.stringify(buildMapSettings()));
+    });
 
-    $("#xPathStart").on("change", function () {
-        pathStart.x = $(this).val();
-    });
-    $("#yPathStart").on("change", function () {
-        pathStart.y = $(this).val();
-    });
-    $("#xPathEnd").on("change", function () {
-        pathEnd.x = $(this).val();
-    });
-    $("#yPathEnd").on("change", function () {
-        pathEnd.y = $(this).val();
-    });
 
     $("#addPathBtn").on("click", addPathColumn);
+    $("#cbsStep").on("click", function () {
+        this.disabled = true;
+        $(this).after('<i id="spinner" class="fa fa-spinner fa-spin" aria-hidden="true"></i>');
+        $.post("/getPathStep", JSON.stringify(map.getPathRequests()), displayCBSStep).fail(resp => {
+            $("#cbsStep").prop("disabled", false);
+            alert(resp.responseText);
+        });
+    });
 
     mapselect.on("change", function () {
         loadMap();
@@ -63,22 +65,11 @@ window.onload = function () {
     $.get("maps", loadMapList); // Load the maps in the select, forces redraw (see function above)
 
     $("#getPathButton").on("click", function () {
-        $.post("/getPath", JSON.stringify(map.getPathRequests()), function (res) {
-            map.drawPathAnswer(res);
-            console.log(res);
-            $("#computationTime").val(res.duration);
-            $("#solutionCost").val(res.cost);
-            let tbody = $("#result_tbody");
-            tbody.html("");
-            let i = 0;
-            res.paths.forEach(path => {
-                let coordPath = "";
-                path.coordinates.forEach(coord => {
-                    coordPath += "(" + coord.x + ", " + coord.y + ")-> ";
-                });
-                let row = "<tr> <td> " + i++ + "</td> <td> " + path.coordinates.length + "</td> <td>" + coordPath + "</td> </tr>";
-                tbody.append(row);
-            });
+        this.disabled = true;
+        $(this).after('<i id="spinner" class="fa fa-spinner fa-spin" aria-hidden="true"></i>');
+        $.post("/getPath", JSON.stringify(map.getPathRequests()), displayPathAnswer).fail(resp => {
+            $("#getPathButton").prop("disabled", false);
+            alert(resp.responseText);
         });
     });
 
@@ -160,7 +151,6 @@ window.onload = function () {
         let srcy = $("#srcy" + agentNum).val() || 0;
         let dstx = $("#dstx" + agentNum).val() || 0;
         let dsty = $("#dsty" + agentNum).val() || 0;
-        console.log("Updating path number " + agentNum);
         map.addPath(agentNum, new Coordinate(srcx, srcy), new Coordinate(dstx, dsty));
     });
 
@@ -280,10 +270,16 @@ function loadMapList(result) {
     loadMap();
 }
 
+function buildMapSettings() {
+    return {
+        cost: parseInt($("#selfLoopCost").val()),
+        map: $("#mapselect option:selected").text(),
+        selfLoop: $("#selfLoop").prop("checked")
+    }
+}
+
 function loadMap() {
-    $.get("/getSelectedMap", {
-        map: $("#mapselect option:selected").text()
-    }, function (result) {
+    $.post("/updateMapSettings", JSON.stringify(buildMapSettings()), function (result) {
         resetMeta();
         map.reset();
         var lines = result.split("\n");
@@ -292,6 +288,9 @@ function loadMap() {
         map.setData(lines.slice(4, lines.length));
         resizeCanvas(true);
         map.draw();
+    }).fail(err => {
+        alert("Could not load the map!");
+        console.log(err);
     });
 }
 
@@ -364,7 +363,7 @@ function zoomMap(diff, center = mousePosRaw) {
     context.scale(factor, factor);
     translateMap({ x: -center.x, y: -center.y }); // takes care of re-drawing map
 
-    console.log("Zoomed " + trueDiff + " times, current zoom: " + zoomLevel);
+    //console.log("Zoomed " + trueDiff + " times, current zoom: " + zoomLevel);
 }
 
 

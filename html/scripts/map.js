@@ -1,6 +1,4 @@
 
-COLOURS = ["green", "red", "blue", "cyan", "yellow", "orange"];
-
 class GraphMap {
     constructor(context) {
         this.reset();
@@ -19,10 +17,6 @@ class GraphMap {
         this.data = data;
     }
 
-    resetImage() {
-        this.image = null;
-    }
-
     isDrawn() {
         return this.image == null;
     }
@@ -33,6 +27,8 @@ class GraphMap {
         this.data = null;
         this.image = null;
         this.pathRequest = new PathRequest();
+        this.pathAnswers = new Array();
+        this.pathColours = new Array();
     }
 
     addPath(index, start, end) {
@@ -48,17 +44,25 @@ class GraphMap {
             context.setTransform(1, 0, 0, 1, 0, 0);
             context.clearRect(0, 0, canvas[0].width, canvas[0].height);
             context.restore();
-
+            // Map obstacles
             context.fillStyle = "black";
-            for (var i = 0; i < map.height; i++) {
+            for (let i = 0; i < map.height; i++) {
                 for (var j = 0; j < map.width; j++) {
                     if (map.data[i][j] != ".") {
                         context.fillRect(j, i, 1, 1);
                     }
                 }
             }
-            for (var i = 0; i < this.pathRequest.length(); i++) {
-                this.drawArrow(this.pathRequest.start[i], this.pathRequest.end[i], COLOURS[i]);
+            // Path answers
+            for (let i = 0; i < this.pathAnswers.length; i++) {
+                context.fillStyle = this.pathColours[i];
+                this.pathAnswers[i].coordinates.forEach(coord => {
+                    context.fillRect(coord.x, coord.y, 1, 1);
+                });
+            }
+            // Path requests
+            for (let i = 0; i < this.pathRequest.length(); i++) {
+                this.drawArrow(this.pathRequest.start[i], this.pathRequest.end[i], this.pathColours[i]);
             }
             this.image = context.getImageData(0, 0, canvas[0].width, canvas[0].height);
             this.image.data.set(new Uint8ClampedArray(this.image.data));
@@ -75,8 +79,12 @@ class GraphMap {
     drawArrow(start, stop, colour = null) {
         var headlen = 2; // length of head in cells
         context.lineWidth = 0.5;
-        if (colour == null) {
-            context.strokeStyle = COLOURS[this.pathRequest.length()];
+        if (!colour) {
+            if (this.pathColours.length <= this.pathRequest.length()) {
+                let colour = getRandomColour();
+                this.pathColours.push(colour);
+            }
+            context.strokeStyle = this.pathColours[this.pathColours.length - 1];
         } else {
             context.strokeStyle = colour;
         }
@@ -101,25 +109,19 @@ class GraphMap {
     }
 
 
-    drawPathAnswer(pathAnswer) {
-        var i = 0;
-        pathAnswer.paths.forEach(function (path) {
-            context.fillStyle = COLOURS[i++ % COLOURS.length];
-            path.coordinates.forEach(function (coord) {
-                context.fillRect(coord.x, coord.y, 1, 1);
-            });
-        });
+    setPathAnswer(pathAnswer) {
+        this.pathAnswers = pathAnswer.paths;
     }
 
 
     getPathRequests() {
-        console.log(JSON.stringify(this.pathRequest));
         return this.pathRequest;
     }
 
     resetPaths() {
-        console.log("Clicked");
         this.pathRequest = new PathRequest();
+        this.pathColours = new Array();
+        this.pathAnswers = new Array();
         this.draw(true);
     }
 

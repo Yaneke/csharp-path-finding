@@ -68,7 +68,7 @@ namespace graph {
             HashSet<Constraint> constraints = new HashSet<Constraint>();
             constraints.Add(new Constraint(this.vertex, this.edgePath.Count));
             CardinalDirection direction = this.edgePath[this.edgePath.Count - 1].ComputeDirection();
-            constraints.Add(new Constraint(direction, this.edgePath.Count));
+            constraints.Add(new Constraint(direction, this.edgePath.Count - 1));
             return constraints;
         }
 
