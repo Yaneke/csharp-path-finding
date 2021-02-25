@@ -30,7 +30,7 @@ window.onload = function () {
     });
 
     canvas = $("#canvas");
-    map = new GraphMap(canvas);
+    map = new GridMap(canvas);
 
     mapselect = $("#mapselect");
 
@@ -62,7 +62,7 @@ window.onload = function () {
 
     $("#getPathButton").on("click", function () {
         $.post("/getPath", JSON.stringify(map.getPathRequests()), function (res) {
-            map.drawPathAnswer(res);
+            map.setPathAnswer(res);
             console.log(res);
             $("#computationTime").val(res.duration);
             $("#solutionCost").val(res.cost);
@@ -231,8 +231,7 @@ function updateMousePos(event) {
     var lastX = (event.offsetX || (event.pageX - canvas[0].offsetLeft));
     var lastY = (event.offsetY || (event.pageY - canvas[0].offsetTop));
 
-    // Inverts the current context transform to account for scale, translation, rotation
-    var trans = map.getLocalCoords(lastX, lastY);
+    var trans = map.toGridCoords(lastX, lastY); // converts canvas coordinates to map coordinates
 
     mousePosRaw.x = trans.x;
     mousePosRaw.y = trans.y;

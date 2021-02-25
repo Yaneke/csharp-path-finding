@@ -26,7 +26,7 @@ class PathRequest {
      * @param {Coordinate} start
      * @param {Coordinate} end
      */
-    addPath(start, end) {
+    addRequest(start, end) {
         this.start.push(start);
         this.end.push(end);
     }
