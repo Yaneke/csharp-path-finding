@@ -3,13 +3,14 @@ const zoomMin = 1, zoomMax = 20; // 1 = show whole map in canvas ... 20 = show s
 
 class GridMap {
     canvas: any;
-    context: any;
+    context: CanvasRenderingContext2D;
     data: string[][];
     image: any;
 
     width: number;
     height: number;
     zoomLevel: number;
+    agentColours: Array<string>;
 
     pathRequest: PathRequest;
     pathSolution: PathAnswer;
@@ -21,6 +22,7 @@ class GridMap {
         this.zoomLevel = zoomMin;
         this.canvas = canvas;
         this.context = canvas[0].getContext("2d");
+        this.agentColours = new Array();
         trackTransforms(this.context);
     }
 
@@ -64,6 +66,12 @@ class GridMap {
         this.pathSolution = pathAnswer;
         this.draw(true);
     }
+    public getAgentColour(agentNum: number) {
+        while (this.agentColours.length <= agentNum) {
+            this.agentColours.push(getRandomColour());
+        }
+        return this.agentColours[agentNum];
+    }
 
     // DRAWING FUNCTIONALITIES
 
@@ -96,27 +104,29 @@ class GridMap {
             }
 
             // Draws the answer paths, if any
-            let self = this;
             let i = 0;
-            this.pathSolution.paths.forEach(function (path) {
-                self.drawPath(path, COLOURS[i % COLOURS.length], i);
+            this.pathSolution.paths.forEach(path => {
+                console.log("Colour for agent " + i + ": " + this.agentColours[i]);
+                this.drawPath(path, this.agentColours[i], i);
                 i++;
             });
 
             // Draws (source -> goal) arrows for each path that doesn't have an answer
+            let colourIndex = 0;
             for (let j = i; j < this.pathRequest.length(); j++) {
-                this.drawArrow(this.pathRequest.start[j], this.pathRequest.end[j], COLOURS[j]);
+                this.drawArrow(this.pathRequest.start[j], this.pathRequest.end[j], this.agentColours[colourIndex]);
+                colourIndex++;
             }
 
             // Draw map grid
             this.context.fillStyle = "black";
             this.context.globalCompositeOperation = "source-over";
-            var gridWidth = 1/100;
+            var gridWidth = 1 / 100;
             for (var x = 1; x < this.width; x++) {
-                this.context.fillRect(x-gridWidth/2, 0, gridWidth, self.height);
+                this.context.fillRect(x - gridWidth / 2, 0, gridWidth, this.height);
             }
             for (var y = 1; y < this.height; y++) {
-                this.context.fillRect(0, y-gridWidth/2, self.width, gridWidth);
+                this.context.fillRect(0, y - gridWidth / 2, this.width, gridWidth);
             }
 
             // Stores the image data for faster re-drawing
@@ -133,10 +143,14 @@ class GridMap {
      * @param {Coordinate} from Coordinates of the arrow base (source)
      * @param {Coordinate} to Coordinates of the arrow head (goal)
      */
-    public drawArrow(from: Coordinate, to: Coordinate, colour = null) {
-        var headlen = 2; // length of arrow head (in cells)
-        this.context.lineWidth = 0.5; // width of arrow (in cells)
-        this.context.strokeStyle = colour != null ? colour : COLOURS[this.pathRequest.length()];
+    public drawArrow(from: Coordinate, to: Coordinate, colour: string = null, width: number = 0.5) {
+        let headlen = 2.5 * width; // length of head in cells
+        this.context.lineWidth = width; // width of arrow (in cells)
+        if (!colour) {
+            this.context.strokeStyle = this.getAgentColour(this.pathRequest.length());
+        } else {
+            this.context.strokeStyle = colour;
+        }
         this.context.lineCap = "round";
         this.context.lineJoin = "round";
         this.context.globalCompositeOperation = "hue";
@@ -164,23 +178,25 @@ class GridMap {
      * The path disappears on the next re-draw.
      * @param {Path} path The sequence of grid coordinates to draw.
      */
-    public drawPath(path: Path, colour, offset: number, offsetMax = this.pathSolution.paths.length) {
-        if (path.coordinates.length == 0) return;
-        this.context.lineWidth = 1/offsetMax;
-        this.context.fillStyle = colour;
+    public drawPath(path: Path, colour: string, offset: number, offsetMax = this.pathSolution.paths.length) {
+        if (path.coordinates.length == 0) {
+            return;
+        };
+        this.context.lineWidth = 1 / offsetMax;
+        this.context.strokeStyle = colour;
         this.context.lineCap = "round";
         // this.context.lineJoin = "round";
         this.context.globalCompositeOperation = "hue";
-        var off = offset/offsetMax + 0.5*1/offsetMax;
-
+        var off = offset / offsetMax + 0.5 * 1 / offsetMax;
+        let coord = path.coordinates[0];
         this.context.beginPath()
-        var coord = path.coordinates[0];
-        this.context.moveTo(coord.x+off, coord.y+off);
-        for (var i=1; i<path.coordinates.length; i++) {
+        this.context.moveTo(coord.x + off, coord.y + off);
+        for (var i = 1; i < path.coordinates.length; i++) {
             coord = path.coordinates[i];
-            this.context.lineTo(coord.x+off, coord.y+off);
+            this.context.lineTo(coord.x + off, coord.y + off);
         }
         this.context.stroke();
+        this.context.closePath();
     }
 
     // ----- MAP ZOOM & TRANSLATE -----
@@ -261,7 +277,9 @@ class GridMap {
      * @param canvasY The vertical offset in pixels from the top of the canvas
      */
     public toGridCoords(canvasX: number, canvasY: number): Coordinate {
-        return this.context.transformedPoint(canvasX, canvasY);
+        // Use the string notation to access the function because TypeScript
+        // does not recognize "transformedPoint" as a property of "CanvasRenderingContext2D"
+        return this.context["transformedPoint"](canvasX, canvasY);
     }
 
     /**
