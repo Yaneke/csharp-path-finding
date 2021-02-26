@@ -76,28 +76,25 @@ class GraphMap {
      * @param {Coordinate} start 
      * @param {Coordinate} stop 
      */
-    drawArrow(start, stop, colour = null) {
-        var headlen = 2; // length of head in cells
+    drawArrow(start, stop, colour = null, width = 0.5) {
+        let headlen = 2.5 * width; // length of head in cells
         context.lineWidth = 0.5;
         if (!colour) {
-            if (this.pathColours.length <= this.pathRequest.length()) {
-                let colour = getRandomColour();
-                this.pathColours.push(colour);
-            }
-            context.strokeStyle = this.pathColours[this.pathColours.length - 1];
+            context.strokeStyle = this.getAgentColour(this.pathRequest.length());
         } else {
             context.strokeStyle = colour;
         }
         context.lineCap = "round";
         context.lineJoin = "round";
+        context.lineWidth = width;
 
-        var fromX = start.x + 0.5;
-        var fromY = start.y + 0.5;
-        var toX = stop.x + 0.5;
-        var toY = stop.y + 0.5;
-        var dx = toX - fromX;
-        var dy = toY - fromY;
-        var angle = Math.atan2(dy, dx);
+        let fromX = start.x + 0.5;
+        let fromY = start.y + 0.5;
+        let toX = stop.x + 0.5;
+        let toY = stop.y + 0.5;
+        let dx = toX - fromX;
+        let dy = toY - fromY;
+        let angle = Math.atan2(dy, dx);
         context.beginPath();
         context.moveTo(fromX, fromY);
         context.lineTo(toX, toY);
@@ -116,6 +113,13 @@ class GraphMap {
 
     getPathRequests() {
         return this.pathRequest;
+    }
+
+    getAgentColour(agentNum) {
+        while (this.pathColours.length <= agentNum) {
+            this.pathColours.push(getRandomColour());
+        }
+        return this.pathColours[agentNum];
     }
 
     resetPaths() {

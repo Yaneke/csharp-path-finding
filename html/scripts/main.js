@@ -2,14 +2,17 @@
 
 var canvas = null;
 var context = null;
-var mapselect = null;
 
 var map = null;
 
 // MAP METADATA
 var zoomLevel = null; // 1 = show whole map in canvas ... 20 = show single cell
 const zoomMin = 1, zoomMax = 20;
-var mousePos, mousePosRaw, pathStart, pathEnd, dragStart;
+var mousePos = new Coordinate();
+var mousePosRaw = new Coordinate();
+var pathStart = new Coordinate();
+var pathEnd = new Coordinate();
+var dragStart = new Coordinate();
 var cntrlIsPressed = false;
 var dragZoomMode, addPathMode, mouseMoved, mapWasDragged;
 var dragMapIntervalID, drawPathIntervalID;
@@ -32,10 +35,11 @@ window.onload = function () {
     context = canvas[0].getContext("2d");
     map = new GraphMap(context);
     trackTransforms(context);
-    mapselect = $("#mapselect");
 
-    resetMeta();
     resetMode();
+
+    zoomLevel = zoomMin;
+    $("#zoomSlider").slider("value", zoomMin);
 
     $("input[type=checkbox].constraint").on("click", updateConflicts);
     updateConflicts(null);
@@ -58,7 +62,7 @@ window.onload = function () {
         });
     });
 
-    mapselect.on("change", function () {
+    $("#mapselect").on("change", function () {
         loadMap();
     })
 
@@ -192,29 +196,10 @@ function updateConflicts(_event) {
     $("input[type=checkbox].constraint").each(function () {
         data[this.name] = this.checked;
     });
+    console.log(data);
     $.post("/constraints", JSON.stringify(data), function () { });
 }
 
-function resetZoom() {
-    zoomLevel = zoomMin;
-    $("#zoomSlider").slider("value", zoomMin);
-}
-
-
-
-function resetMeta() {
-    $("#xPathStart").val("");
-    $("#yPathStart").val("");
-    $("#xPathEnd").val("");
-    $("#yPathEnd").val("");
-    resetPathTable();
-    mousePos = new Coordinate();
-    mousePosRaw = new Coordinate();
-    pathStart = new Coordinate();
-    pathEnd = new Coordinate();
-    dragStart = new Coordinate();
-    resetZoom();
-}
 
 // MAP MODES
 
@@ -265,7 +250,7 @@ function whileDraggingMap() {
 
 function loadMapList(result) {
     result.forEach(element => {
-        mapselect.append(new Option(element, element));
+        $("#mapselect").append(new Option(element, element));
     });
     loadMap();
 }
@@ -280,8 +265,8 @@ function buildMapSettings() {
 
 function loadMap() {
     $.post("/updateMapSettings", JSON.stringify(buildMapSettings()), function (result) {
-        resetMeta();
         map.reset();
+        resetPathTable();
         var lines = result.split("\n");
         map.setWidth(lines[2].split(" ")[1]);
         map.setHeight(lines[1].split(" ")[1]);
@@ -300,8 +285,7 @@ function resizeCanvas(resetTransform = false) {
         prevCenter = context.transformedPoint(canvas[0].width / 2, canvas[0].height / 2);
         prevZoom = zoomLevel;
     }
-    resetZoom();
-
+    zoomLevel = zoomMin;
     context.setTransform(1, 0, 0, 1, 0, 0);
     canvas.prop("width", canvas.innerWidth()); // maximize width to use all available pixels
     var canvasBaseScale = canvas[0].width * 1.0 / map.width;
@@ -352,17 +336,13 @@ function zoomMapTo(value, center = context.transformedPoint(canvas[0].width / 2,
 function zoomMap(diff, center = mousePosRaw) {
     var newLevel = (diff > 0) ? Math.min(zoomLevel + diff, zoomMax) : Math.max(zoomLevel + diff, zoomMin);
     var trueDiff = newLevel - zoomLevel;
-
     zoomLevel = newLevel;
-    $("#zoomSlider").slider("value", zoomLevel);
-
     var scaleFactor = Math.pow(map.width, 1.0 / (zoomMax - zoomMin));
     var factor = Math.pow(scaleFactor, trueDiff);
 
     context.translate(center.x, center.y); // resets origin so that it scales from center
     context.scale(factor, factor);
     translateMap({ x: -center.x, y: -center.y }); // takes care of re-drawing map
-
     //console.log("Zoomed " + trueDiff + " times, current zoom: " + zoomLevel);
 }
 

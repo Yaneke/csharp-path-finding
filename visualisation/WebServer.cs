@@ -82,10 +82,10 @@ namespace visualisation {
             resp.ContentType = "text/plain";
             string data = this.ReadPostData(req);
             Console.WriteLine(data);
-            data_objects.MapSettings settings = JsonSerializer.Deserialize<data_objects.MapSettings>(data);
+            data_objects.MapSettingsDO settings = JsonSerializer.Deserialize<data_objects.MapSettingsDO>(data);
             string fileName = "data/" + settings.map;
             resp.OutputStream.Write(File.ReadAllBytes(fileName));
-            this.map = new GridGraph(fileName, true, 0);
+            this.map = new GridGraph(fileName, settings.selfLoop, (int)settings.cost);
         }
 
         private string ReadPostData(HttpListenerRequest req) {
@@ -97,7 +97,7 @@ namespace visualisation {
         private void SetMapSettings(HttpListenerRequest req, HttpListenerResponse resp) {
             string data = this.ReadPostData(req);
             try {
-                data_objects.MapSettings constraintUpdate = JsonSerializer.Deserialize<data_objects.MapSettings>(data);
+                data_objects.MapSettingsDO constraintUpdate = JsonSerializer.Deserialize<data_objects.MapSettingsDO>(data);
                 resp.ContentLength64 = 0;
                 resp.ContentType = "plain";
             }
@@ -110,7 +110,7 @@ namespace visualisation {
         private void UpdateConstraints(HttpListenerRequest req, HttpListenerResponse resp) {
             string data = this.ReadPostData(req);
             try {
-                data_objects.ConstraintUpdate constraintUpdate = JsonSerializer.Deserialize<data_objects.ConstraintUpdate>(data);
+                data_objects.ConstraintUpdateDO constraintUpdate = JsonSerializer.Deserialize<data_objects.ConstraintUpdateDO>(data);
                 this.cbs = new CBS();
                 if (constraintUpdate.cardinal) {
                     this.cbs.WithCardinalConflicts();

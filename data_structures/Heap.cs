@@ -18,14 +18,19 @@ namespace data_structures {
             this.itemIndices = new Dictionary<T, int>();
         }
 
-        /// Add the item to the heap, or update the value if the item already exists.
+        /// Add the item to the heap. Does not check if it is present already.
         public void Add(T item) {
-            if (this.Contains(item)) {
-                this.Update(item);
-            } else {
-                this.items.Add(item);
-                this.itemIndices.Add(item, this.Count - 1);
-                this.SortUp(this.Count - 1);
+            this.items.Add(item);
+            this.itemIndices.Add(item, this.Count - 1);
+            this.SortUp(this.Count - 1);
+        }
+
+        public void UpdateIfBetter(T item) {
+            int index = this.itemIndices[item];
+            T previousItem = this.items[index];
+            if (item.CompareTo(previousItem) < 0) {
+                this.items[index] = item;
+                this.SortUp(index);
             }
         }
 
@@ -42,20 +47,17 @@ namespace data_structures {
             return -1;
         }
 
-        /// Update an item's value
-        public bool Update(T item) {
-            if (this.Contains(item)) {
-                int index = this.itemIndices[item];
-                if (item.CompareTo(this.items[index]) < 0) {
-                    this.items[index] = item;
-                    this.SortUp(index);
-                } else {
-                    this.items[index] = item;
-                    this.SortDown(index);
-                }
-                return true;
+        /// <summary> Update an item's value. Crashes if not present </summary>
+        /// If the new item is equal to the previous value, it is still updated.
+        public void Update(T item) {
+            int index = this.itemIndices[item];
+            int cmpResult = item.CompareTo(this.items[index]);
+            this.items[index] = item;
+            if (cmpResult < 0) {
+                this.SortUp(index);
+            } else {
+                this.SortDown(index);
             }
-            return false;
         }
 
         private int GetParentIndex(int pos) {
@@ -77,12 +79,14 @@ namespace data_structures {
             }
             T res = this.items[0];
             this.itemIndices.Remove(res);
-            if (this.Count > 0) {
-                int lastIdx = this.Count - 1;
-                this.items[0] = this.items[lastIdx];
-                this.items.RemoveAt(lastIdx);
-                this.SortDown(0);
+            int lastIdx = this.Count - 1;
+            if (lastIdx > 0) {
+                T lastItem = this.items[lastIdx];
+                this.items[0] = this.items[lastIdx]; ;
+                this.itemIndices[lastItem] = 0;
             }
+            this.items.RemoveAt(lastIdx);
+            this.SortDown(0);
             return res;
         }
 

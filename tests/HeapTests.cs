@@ -14,7 +14,10 @@ namespace tests {
             Heap<int> heap = new Heap<int>();
             Random random = new Random();
             for (int i = 0; i < 1000; i++) {
-                heap.Add(random.Next() % 200);
+                int r = random.Next() % 200;
+                if (!heap.Contains(r)){
+                    heap.Add(r);
+                }
             }
             int previous = heap.Pop();
             while (heap.Count > 0) {
@@ -42,10 +45,10 @@ namespace tests {
 
             Path bestPath = new Path(sourcePath, source.GetEdgeTo(destination), graph.HCost(destination, destination));
 
-            // Add the suboptimal path and then the optimal -> check that the optimal indeed replaces the suboptimal one
+            // Add the suboptimal path and then the optimal -> check that the optimal indeed goes on top
             heap.Add(p3);
             heap.Add(bestPath);
-            Assert.AreEqual(1, heap.Count);
+            Assert.AreEqual(2, heap.Count);
 
             // Pop the item and check that the shortest path indeed pops out
             Path shortest = heap.Pop();
