@@ -10,13 +10,34 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" />
 </head>
 
-<body class="container-fluid">
-    <div class="row">
-        <div class="col-6">
-            <h2>The map</h2>
-            <div class="controlgroup" data-type="horizontal">
-                <label id="zoomLabel" for="zoomSlider">Scale: 1</label>
-                <div class="slider" id="zoomSlider" style="display: inline-flex; width: 100%; margin-right: 10px;">
+<body>
+    <div class="container-fluid">
+        <div class="row mt-2 mb-2">
+            <div class="wrapper"
+                style="display: table; table-layout: fixed; position: absolute; width: 100%; height: 100%; top: 0px; left: 0px">
+                <div class="map pane"
+                    style="display: table-cell; padding: 5px; width: 50%; background-color: lightcyan; border: solid; border-width: 0px; border-right-width: 1px">
+                    <h2>The map</h2>
+                    <div class="controlgroup" data-type="horizontal"
+                        style="width: 100%; border: solid; border-width: 1px; padding: 3px;">
+                        <label id="zoomLabel" for="zoomSlider">Scale</label>
+                        <div class="slider" id="zoomSlider"
+                            style="display: inline-flex; width: 100%; margin-right: 10px;"></div>
+                        <label>Mouse position</label>
+                        x = <input id="xMousePos" type="text" size="3" /> y = <input id="yMousePos" type="text"
+                            size="3" />
+                        <br />
+                        <p>
+                        <form>
+                            Select map:
+                            <select name="selectedMap" id="mapselect"></select>
+                        </form>
+                        </p>
+                    </div>
+                    <canvas id="canvas" style="background-color: white; width: 100%; border: solid; border-width: 1px;">
+
+                    </canvas>
+
                 </div>
                 <label>Mouse position</label>
                 x = <input id="xMousePos" type="text" size="3" /> y = <input id="yMousePos" type="text" size="3" />
@@ -115,9 +136,10 @@
 
 <script type="text/javascript" src="scripts/libs/jquery.js"></script>
 <script type="text/javascript" src="scripts/libs/jquery-ui.min.js"></script>
-<script type="text/javascript" src="scripts/data_types.js"></script>
-<script type="text/javascript" src="scripts/map.js"></script>
-<script type="text/javascript" src="scripts/ui.js"></script>
-<script type="text/javascript" src="scripts/main.js"></script>
+<!-- <script type="text/javascript" src="scripts/bootstrap.bundle.min.js"></script> -->
+<script type="text/javascript" src="scripts/built/src/data_types.js"></script>
+<script type="text/javascript" src="scripts/built/src/Map.js"></script>
+<script type="text/javascript" src="scripts/built/src/ui.js"></script>
+<script type="text/javascript" src="scripts/built/src/main.js"></script>
 
 </html>

@@ -23,18 +23,12 @@ class PathRequest {
     }
 
     /**
-    * @param {Number} index
-    * @param {Coordinate} start
-    * @param {Coordinate} end
-    */
-    addPath(index, start, end) {
-        if (index < this.length()) {
-            this.start[index] = start;
-            this.end[index] = end;
-        } else {
-            this.start.push(start);
-            this.end.push(end);
-        }
+     * @param {Coordinate} start
+     * @param {Coordinate} end
+     */
+    addRequest(start, end) {
+        this.start.push(start);
+        this.end.push(end);
     }
 
     length() {
