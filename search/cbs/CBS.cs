@@ -6,7 +6,7 @@ using System;
 namespace search.cbs {
     public class CBS {
 
-        private HashSet<ConflictChecker> checkers;
+        public HashSet<ConflictChecker> checkers { get; }
 
         public CBS() {
             this.checkers = new HashSet<ConflictChecker>();
@@ -66,7 +66,7 @@ namespace search.cbs {
         }
 
 
-        public IEnumerable<CBSNode> EnumerateCBSOrder(Graph graph, List<Vertex> sources, List<Vertex> destinations) {
+        public IEnumerator<CBSNode> EnumerateCBSOrder(Graph graph, List<Vertex> sources, List<Vertex> destinations) {
             ConstraintSet emptyConstraints = new ConstraintSet();
             Solution solution = CBS.LowLevelSearch(graph, sources, destinations, emptyConstraints);
             CBSNode root = new CBSNode(emptyConstraints, solution);

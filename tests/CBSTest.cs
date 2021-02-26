@@ -24,21 +24,25 @@ namespace tests {
         [TestMethod]
         public void ManyCardinalConflicts() {
             // In this situation, both agents have to go up all the time, hence many CardinalConflicts.
-            GridGraph g = new GridGraph("../../../data/empty-16-16.map");
+            GridGraph g = new GridGraph("../../../data/empty-16-16.map", true, 0);
             List<Vertex> sources = new List<Vertex>();
             List<Vertex> destinations = new List<Vertex>();
-            sources.Add(g.GetVertexAt(0, 0));
-            sources.Add(g.GetVertexAt(1, 0));
-            destinations.Add(g.GetVertexAt(0, 5));
-            destinations.Add(g.GetVertexAt(1, 5));
-            Solution s = CBS.Default().ShortestPath(g, sources, destinations);
+            sources.Add(g.GetVertexAt(4, 4));
+            sources.Add(g.GetVertexAt(5, 4));
+            destinations.Add(g.GetVertexAt(4, 9));
+            destinations.Add(g.GetVertexAt(5, 9));
+            Solution s = new CBS().WithCardinalConflicts().ShortestPath(g, sources, destinations);
             int totalLength = 0;
             foreach (Path p in s.GetPaths()) {
                 totalLength += p.edgePath.Count;
+                foreach(CardinalDirection d in p.directionPath) {
+                    Console.Write(d + "\t");
+                }
+                Console.WriteLine();
             }
             Assert.AreEqual(10, s.cost);
-            // Expected total length is 10: 5 time steps for the first and 5 for the second agent
-            Assert.AreEqual(10, totalLength);
+            // Expected total length is 10: 5 time steps for the first and 10 for the second agent
+            Assert.AreEqual(15, totalLength);
         }
 
 
@@ -47,7 +51,7 @@ namespace tests {
 
         [TestMethod]
         public void CrossingPaths_2Agents() {
-            GridGraph g = new GridGraph("../../../data/empty-16-16.map", true, 0);
+            GridGraph g = new GridGraph("../../../data/empty-16-16.map", true, 1);
             List<Vertex> sources = new List<Vertex>();
             List<Vertex> destinations = new List<Vertex>();
             sources.Add(g.GetVertexAt(5, 5));
@@ -75,13 +79,13 @@ namespace tests {
             destinations.Add(g.GetVertexAt(6, 4));
             destinations.Add(g.GetVertexAt(5, 5));
             destinations.Add(g.GetVertexAt(6, 6));
-            Solution s = CBS.Default().ShortestPath(g, sources, destinations);
+            Solution s = new CBS().WithVertexConflicts().WithFollowingConflicts().ShortestPath(g, sources, destinations);
             Console.WriteLine(s.GetPath(0));
             Console.WriteLine(s.GetPath(1));
             Console.WriteLine(s.GetPath(2));
             Console.WriteLine(s.GetPath(3));
             Assert.IsNotNull(s);
-            //Assert.AreEqual(16, s.cost);
+            Assert.AreEqual(12, s.cost);
         }
 
         /*

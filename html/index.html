@@ -35,60 +35,66 @@
                 <!-- </div> -->
             </div>
 
-            <div class="col-6" style="background-color: ivory; ">
-                <h3> Paths </h3>
-                <table class="table">
-                    <thead>
-                        <tr id="agents">
-                            <th>
-                                <button id="addPathBtn" class="btn btn-outline-secondary">
-                                    <i class="fa fa-plus" aria-hidden="true"></i>
-                                </button>
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr id="sources">
-                            <th> Source </th>
-                            </td>
-                        </tr>
-                        <tr id="destinations">
-                            <th> Destination </th>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-                <div class="m-2">
-                    <div>
-                        <input id="getPathButton" type="button" value="Compute path" />
-                        <input id="resetPathButton" type="button" value="Reset path" />
-                    </div>
-                </div>
-                <hr>
-                <div class="m-2">
-                    <h3> Conflicts </h3>
-                    <div>
-                        <label>
-                            <input type="checkbox" name="cardinal" class="constraint" />
-                            Cardinal conflicts
-                        </label>
-                        <label>
-                            <input type="checkbox" name="vertex" class="constraint" checked />
-                            Vertex conflicts
-                        </label>
-                        <label>
-                            <input type="checkbox" name="following" class="constraint" />
-                            Following conflicts
-                        </label>
-                        <label>
-                            <input type="checkbox" name="edge" class="constraint" />
-                            Edge conflicts
-                        </label>
-                    </div>
-                </div>
-                <hr>
-                <div class="m-2">
-                    <h3> Results </h3>
+        <div class="col-6" style="background-color: ivory; ">
+            <h3> Paths </h3>
+            <table class="table table-sm">
+                <thead>
+                    <tr id="agents">
+                        <th>
+                            <button id="addPathBtn" class="btn btn-outline-secondary">
+                                <i class="fa fa-plus" aria-hidden="true"></i>
+                            </button>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr id="sources">
+                        <th> Source </th>
+                        </td>
+                    </tr>
+                    <tr id="destinations">
+                        <th> Destination </th>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="m-2">
+                <label>
+                    <input type="checkbox" name="cardinal" class="constraint" />
+                    Cardinal conflicts
+                </label>
+                <label>
+                    <input type="checkbox" name="vertex" class="constraint" checked />
+                    Vertex conflicts
+                </label>
+                <label>
+                    <input type="checkbox" name="following" class="constraint" />
+                    Following conflicts
+                </label>
+                <label>
+                    <input type="checkbox" name="edge" class="constraint" />
+                    Edge conflicts
+                </label>
+            </div>
+            <div class="m-2">
+                <label>
+                    <input type="checkbox" id="selfLoop" checked />
+                    Vertex self-loops
+                </label>
+                <label>
+                    Self-loops cost
+                    <input type="number" id="selfLoopCost" value="1" />
+                </label>
+            </div>
+            <div class="m-2">
+                <input id="getPathButton" type="button" value="Compute path" />
+                <input id="resetPathButton" type="button" value="Reset path" />
+                <input id="cbsStep" type="button" value="CBS step" />
+            </div>
+            <hr>
+            <div class="m-2">
+                <h3> Results </h3>
+                <div>
                     <label>
                         Solution cost
                         <input id="solutionCost" type="text" size="5" readonly>
@@ -98,21 +104,37 @@
                         Computation time
                         <input id="computationTime" type="text" size="5" readonly> s
                     </label>
-                    <table class="table table-striped">
-                        <thead>
-                            <tr>
-                                <th> Agent </th>
-                                <th> Path length </th>
-                                <th> Path string </th>
-                            </tr>
-                        <tbody id="result_tbody">
-
-                        </tbody>
-                        </thead>
-                    </table>
+                    <br />
+                    <label>
+                        Conflict: <span id="conflict"></span>
+                    </label>
                 </div>
-                <hr>
+                <h4>Current constraints</h4>
+                <table class="table table-striped table-sm">
+                    <thead>
+                        <tr>
+                            <th> Agent </th>
+                            <th> Time step </th>
+                            <th> Constrained object </th>
+                        </tr>
+                    </thead>
+                    <tbody id="constraints_tbody">
+                    </tbody>
+                </table>
+                <h4>Resulting paths</h4>
+                <table class="table table-striped table-sm">
+                    <thead>
+                        <tr>
+                            <th> Agent </th>
+                            <th> Path length </th>
+                            <th> Path string </th>
+                        </tr>
+                    </thead>
+                    <tbody id="result_tbody">
+                    </tbody>
+                </table>
             </div>
+            <hr>
         </div>
     </div>
 </body>
@@ -124,5 +146,10 @@
 <script type="text/javascript" src="scripts/built/src/Map.js"></script>
 <script type="text/javascript" src="scripts/built/src/ui.js"></script>
 <script type="text/javascript" src="scripts/built/src/main.js"></script>
+<script type="text/javascript" src="scripts/utils.js"> </script>
+<script type="text/javascript" src="scripts/data_types.js"></script>
+<script type="text/javascript" src="scripts/map.js"></script>
+<script type="text/javascript" src="scripts/ui.js"></script>
+<script type="text/javascript" src="scripts/main.js"></script>
 
 </html>

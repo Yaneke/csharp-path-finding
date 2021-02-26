@@ -95,7 +95,7 @@ namespace search.cbs {
                     CardinalDirection direction = currentEdge.ComputeDirection();
                     if (!directionTaken.TryAdd(direction, agent)) {
                         int conflictingAgent = directionTaken[direction];
-                        return new CardinalConflict(conflictingAgent, agent, direction, timestep + 1);
+                        return new CardinalConflict(conflictingAgent, agent, direction, timestep);
                     }
                 }
             }

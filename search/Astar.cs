@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System;
 using graph;
 using data_structures;
 using Priority_Queue;
@@ -32,15 +33,20 @@ namespace search {
                 currentPath = openSet.Pop();
                 foreach (var edge in currentPath.vertex.GetEdges()) {
                     Path neighbourPath = new Path(currentPath, edge, graph.HCost(edge.neighbour, destination));
-                    //                    if (!constraints.Overlaps(neighbourPath.ToConstraints()))
-                    if (!constraints.Overlaps(neighbourPath.ToConstraints())) {
+                    GridVertex gv = (GridVertex)neighbourPath.vertex;
+                    HashSet<Constraint> asConstraints = neighbourPath.ToConstraints();
+                    if (!constraints.Overlaps(asConstraints)) {
                         // The path to the neighbour will be considered either if it is unknown or if it has a lower cost than the previously known one
                         if (!bestPaths.ContainsKey(neighbourPath.vertex)) {
                             bestPaths.Add(neighbourPath.vertex, neighbourPath);
                             openSet.Add(neighbourPath);
                         } else if (neighbourPath.CompareTo(bestPaths[neighbourPath.vertex]) < 0) {
                             bestPaths[neighbourPath.vertex] = neighbourPath;
-                            openSet.Update(neighbourPath);
+                            if (openSet.Contains(neighbourPath)) {
+                                openSet.Update(neighbourPath);
+                            } else {
+                                openSet.Add(neighbourPath);
+                            }
                         }
                     }
                 }
@@ -51,6 +57,32 @@ namespace search {
                 return null;
             }
             return bestPaths[destination];
+        }
+
+        public static Path NewShortestPath(Graph graph, Vertex source, Vertex destination, HashSet<Constraint> constraints) {
+            Heap<Path> openSet = new Heap<Path>();
+            openSet.Add(new Path(source));
+            Path currentPath = null;
+            do {
+                currentPath = openSet.Pop();
+                Console.WriteLine("Current node = " + currentPath.vertex);
+                if (currentPath.vertex.Equals(destination)) {
+                    return currentPath;
+                }
+                foreach (Edge e in currentPath.GetEdges()) {
+                    Path neighbourPath = new Path(currentPath, e, graph.HCost(e.neighbour, destination));
+                    var asConstraints = neighbourPath.ToConstraints();
+                    if (!constraints.Overlaps(asConstraints)) {
+                        if (openSet.Contains(neighbourPath)) {
+                            Console.WriteLine(neighbourPath);
+                            openSet.UpdateIfBetter(neighbourPath);
+                        } else {
+                            openSet.Add(neighbourPath);
+                        }
+                    }
+                }
+            } while (openSet.Count > 0);
+            return null;
         }
 
 

@@ -17,5 +17,22 @@ namespace visualisation.data_objects {
         public override string ToString() {
             return "(" + x + ", " + y + ")";
         }
+
+
+        // override object.Equals
+        public override bool Equals(object obj) {
+            if (obj == null || GetType() != obj.GetType()) {
+                return false;
+            }
+            CoordinateDO other = (CoordinateDO)obj;
+            return this.x == other.x && this.y == other.y;
+        }
+
+        // override object.GetHashCode
+        public override int GetHashCode() {
+            // TODO: write your implementation of GetHashCode() here
+            throw new System.NotImplementedException();
+            return base.GetHashCode();
+        }
     }
 }

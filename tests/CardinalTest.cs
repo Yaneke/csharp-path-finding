@@ -7,7 +7,7 @@ namespace tests {
 
 
         [TestMethod]
-        public void ExtensiveTests() {
+        public void ComputeDirecionTests() {
             GridGraph g = new GridGraph("../../../data/empty-16-16.map", true, 0);
             Vertex center = g.GetVertexAt(5, 5);
             Vertex west = g.GetVertexAt(5, 4);

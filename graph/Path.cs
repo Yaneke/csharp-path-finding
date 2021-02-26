@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using search;
 
@@ -15,6 +16,13 @@ namespace graph {
                 return this.gCost + this.hCost;
             }
         }
+        public List<CardinalDirection> directionPath {get {
+            List<CardinalDirection> path = new List<CardinalDirection>();
+            foreach(Edge e in this.edgePath) {
+                path.Add(e.ComputeDirection());
+            }
+            return path;
+        }}
 
         /// <summary> Create a Path from the source. <summary>
         public Path(Vertex source) {
@@ -61,14 +69,19 @@ namespace graph {
         }
 
         public override int GetHashCode() {
-            return this.vertex.GetHashCode();
+            const int seed = 487;
+            const int modifier = 31;
+            unchecked {
+                return this.vertexPath.Aggregate(seed, (current, item) =>
+                    (current * modifier) + item.GetHashCode());
+            }
         }
 
         public HashSet<Constraint> ToConstraints() {
             HashSet<Constraint> constraints = new HashSet<Constraint>();
             constraints.Add(new Constraint(this.vertex, this.edgePath.Count));
             CardinalDirection direction = this.edgePath[this.edgePath.Count - 1].ComputeDirection();
-            constraints.Add(new Constraint(direction, this.edgePath.Count));
+            constraints.Add(new Constraint(direction, this.edgePath.Count - 1));
             return constraints;
         }
 

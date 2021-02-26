@@ -19,7 +19,7 @@ var dragMapIntervalID, drawPathIntervalID;
 
 
 window.onload = function () {
-    $("#zoomSlider").slider({
+    $(".slider").slider({
         min: zoomMin,
         max: zoomMax,
         step: 1,
@@ -27,17 +27,11 @@ window.onload = function () {
         animate: "fast",
         slide: function (_event, ui) {
             document.getElementById("zoomLabel").innerHTML = ("Scale: " + ui.value);
-            map.zoomTo(ui.value);
-        },
-        change: function (_, ui) {
-            document.getElementById("zoomLabel").innerHTML = ("Scale: " + ui.value);
-            //map.zoomTo(ui.value) // TODO ?
+            zoomMapTo(ui.value);
         }
     });
 
     canvas = $("#canvas");
-    mapselect = $("#mapselect");
-    map = new GridMap(canvas);
     context = canvas[0].getContext("2d");
     map = new GraphMap(context);
     trackTransforms(context);
@@ -75,29 +69,11 @@ window.onload = function () {
     $.get("maps", loadMapList); // Load the maps in the select, forces redraw (see function above)
 
     $("#getPathButton").on("click", function () {
-        // TODO
-        $.post("/getPath", JSON.stringify(map.getPathRequests()), function (res) {
-            map.setPathAnswer(res);
-            console.log(res);
-            $("#computationTime").val(res.duration);
-            $("#solutionCost").val(res.cost);
-            let tbody = $("#result_tbody");
-            tbody.html("");
-            let i = 0;
-            res.paths.forEach(path => {
-                let coordPath = "";
-                path.coordinates.forEach(coord => {
-                    coordPath += "(" + coord.x + ", " + coord.y + ")-> ";
-                });
-                let row = "<tr> <td> " + i++ + "</td> <td> " + path.coordinates.length + "</td> <td>" + coordPath + "</td> </tr>";
-                tbody.append(row);
-            });
-            this.disabled = true;
-            $(this).after('<i id="spinner" class="fa fa-spinner fa-spin" aria-hidden="true"></i>');
-            $.post("/getPath", JSON.stringify(map.getPathRequests()), displayPathAnswer).fail(resp => {
-                $("#getPathButton").prop("disabled", false);
-                alert(resp.responseText);
-            });
+        this.disabled = true;
+        $(this).after('<i id="spinner" class="fa fa-spinner fa-spin" aria-hidden="true"></i>');
+        $.post("/getPath", JSON.stringify(map.getPathRequests()), displayPathAnswer).fail(resp => {
+            $("#getPathButton").prop("disabled", false);
+            alert(resp.responseText);
         });
     });
 
@@ -156,7 +132,7 @@ window.onload = function () {
             if (mapWasDragged || mouseMoved) {
                 whileDraggingMap();
             } else {
-                $("#zoomSlider").slider("value", map.zoomDelta(event.shiftKey ? -1 : 1, mousePosRaw));
+                zoomMap(event.shiftKey ? -1 : 1);
             }
         }
         if (addPathMode) {
@@ -196,8 +172,6 @@ window.onload = function () {
         handles: "e, w",
         stop: function (_event, ui) {
             setWidthInPercent(ui.element);
-            setZoom(map.resizeCanvas());
-            map.draw();
         }
 
     });
@@ -208,13 +182,11 @@ window.onload = function () {
         },
         stop: function (_event, ui) {
             setWidthInPercent(ui.element);
-            setZoom(map.resizeCanvas());
-            map.draw();
         }
     });
 
     window.addEventListener("resize", function () {
-        setZoom(map.resizeCanvas());
+        resizeCanvas();
     });
 };
 
@@ -230,7 +202,7 @@ function updateConflicts(_event) {
 
 
 // MAP MODES
-// TODO: remove these functions
+
 function resetMode() {
     dragZoomMode = false;
     addPathMode = false;
@@ -244,7 +216,8 @@ function updateMousePos(event) {
     var lastX = (event.offsetX || (event.pageX - canvas[0].offsetLeft));
     var lastY = (event.offsetY || (event.pageY - canvas[0].offsetTop));
 
-    var trans = map.toGridCoords(lastX, lastY); // converts canvas coordinates to map coordinates
+    // Inverts the current context transform to account for scale, translation, rotation
+    var trans = context.transformedPoint(lastX, lastY);
 
     mousePosRaw.x = trans.x;
     mousePosRaw.y = trans.y;
@@ -269,7 +242,7 @@ function whileDraggingMap() {
     if (mouseMoved) {
         mouseMoved = false;
         mapWasDragged = true;
-        map.translateFromTo(dragStart, mousePosRaw);
+        translateMapFromTo();
     }
 }
 
@@ -298,8 +271,7 @@ function loadMap() {
         map.setWidth(lines[2].split(" ")[1]);
         map.setHeight(lines[1].split(" ")[1]);
         map.setData(lines.slice(4, lines.length));
-
-        setZoom(map.resizeCanvas(true));
+        resizeCanvas(true);
         map.draw();
     }).fail(err => {
         alert("Could not load the map!");
@@ -379,7 +351,7 @@ function zoomMap(diff, center = mousePosRaw) {
 // ----- TRANSFORMS TRACKING -----
 
 // Taken from http://phrogz.net/tmp/canvas_zoom_to_cursor.html
-// Copyright © 2011 <a href="mailto:!@phrogz.net">Gavin Kistner</a>.
+// Copyright © 2011 <a href="mailto:!@phrogz.net">Gavin Kistner</a>. 
 // Written to support <a href="http://stackoverflow.com/questions/5189968/zoom-to-cursor-calculations/5526721#5526721">this Stack Overflow answer</a>.</p>
 function trackTransforms(ctx) {
     var svg = document.createElementNS("http://www.w3.org/2000/svg", 'svg');
