@@ -87,25 +87,37 @@ class GridMap {
 
             // Draws map boundaries and obstacles
             this.context.fillStyle = "black";
-            for (var i = 0; i < this.height; i++) {
-                for (var j = 0; j < this.width; j++) {
+            for (let i = 0; i < this.height; i++) {
+                for (let j = 0; j < this.width; j++) {
                     if (this.data[i][j] != ".") {
                         this.context.fillRect(j, i, 1, 1);
                     }
                 }
             }
 
-            // Draws (source -> goal) arrows for each path
-            for (var i = 0; i < this.pathRequest.length(); i++) {
-                this.drawArrow(this.pathRequest.start[i], this.pathRequest.end[i], COLOURS[i]);
+            // Draws the answer paths, if any
+            let self = this;
+            let i = 0;
+            this.pathSolution.paths.forEach(function (path) {
+                self.drawPath(path, COLOURS[i % COLOURS.length], i);
+                i++;
+            });
+
+            // Draws (source -> goal) arrows for each path that doesn't have an answer
+            for (let j = i; j < this.pathRequest.length(); j++) {
+                this.drawArrow(this.pathRequest.start[j], this.pathRequest.end[j], COLOURS[j]);
             }
 
-            // Draws the answer paths, if any
-            var self = this;
-            var i = 0;
-            this.pathSolution.paths.forEach(function (path) {
-                self.drawPath(path, COLOURS[i++ % COLOURS.length]);
-            });
+            // Draw map grid
+            this.context.fillStyle = "black";
+            this.context.globalCompositeOperation = "source-over";
+            var gridWidth = 1/100;
+            for (var x = 1; x < this.width; x++) {
+                this.context.fillRect(x-gridWidth/2, 0, gridWidth, self.height);
+            }
+            for (var y = 1; y < this.height; y++) {
+                this.context.fillRect(0, y-gridWidth/2, self.width, gridWidth);
+            }
 
             // Stores the image data for faster re-drawing
             this.image = this.context.getImageData(0, 0, this.canvas[0].width, this.canvas[0].height);
@@ -127,6 +139,7 @@ class GridMap {
         this.context.strokeStyle = colour != null ? colour : COLOURS[this.pathRequest.length()];
         this.context.lineCap = "round";
         this.context.lineJoin = "round";
+        this.context.globalCompositeOperation = "hue";
 
         var fromX = from.x + 0.5;
         var fromY = from.y + 0.5;
@@ -151,12 +164,23 @@ class GridMap {
      * The path disappears on the next re-draw.
      * @param {Path} path The sequence of grid coordinates to draw.
      */
-    public drawPath(path: Path, colour) {
-        var self = this;
-        self.context.fillStyle = colour;
-        path.coordinates.forEach(function (coord: Coordinate) {
-            self.context.fillRect(coord.x, coord.y, 1, 1);
-        });
+    public drawPath(path: Path, colour, offset: number, offsetMax = this.pathSolution.paths.length) {
+        if (path.coordinates.length == 0) return;
+        this.context.lineWidth = 1/offsetMax;
+        this.context.fillStyle = colour;
+        this.context.lineCap = "round";
+        // this.context.lineJoin = "round";
+        this.context.globalCompositeOperation = "hue";
+        var off = offset/offsetMax + 0.5*1/offsetMax;
+
+        this.context.beginPath()
+        var coord = path.coordinates[0];
+        this.context.moveTo(coord.x+off, coord.y+off);
+        for (var i=1; i<path.coordinates.length; i++) {
+            coord = path.coordinates[i];
+            this.context.lineTo(coord.x+off, coord.y+off);
+        }
+        this.context.stroke();
     }
 
     // ----- MAP ZOOM & TRANSLATE -----
