@@ -4,8 +4,8 @@ class Coordinate {
      * @param {Number} y 
      */
     constructor(x = NaN, y = NaN) {
-        this.x = parseInt(x);
-        this.y = parseInt(y);
+        this.x = typeof(x) === "string" ? parseInt(x) : x;
+        this.y = typeof(y) === "string" ? parseInt(y) : y;
     }
 
     to_ij() {
