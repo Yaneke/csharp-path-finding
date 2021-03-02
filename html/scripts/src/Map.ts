@@ -1,4 +1,3 @@
-const COLOURS = ["green", "red", "blue", "cyan", "yellow", "orange"];
 const zoomMin = 1, zoomMax = 20; // 1 = show whole map in canvas ... 20 = show single cell
 
 class GridMap {
@@ -22,7 +21,7 @@ class GridMap {
         this.zoomLevel = zoomMin;
         this.canvas = canvas;
         this.context = canvas[0].getContext("2d");
-        this.agentColours = new Array();
+        this.agentColours = new Array("green", "red", "blue", "cyan", "yellow", "orange");
         trackTransforms(this.context);
     }
 
@@ -112,7 +111,7 @@ class GridMap {
             let i = 0;
             this.pathSolution.paths.forEach(path => {
                 console.log("Colour for agent " + i + ": " + this.getAgentColour(i));
-                this.drawPath(path, this.getAgentColour(i), i);
+                this.drawPath(path, i);
                 i++;
             });
 
@@ -180,26 +179,55 @@ class GridMap {
      * Draws a sequence of grid coordinates in a given color, forming a path.
      * The path disappears on the next re-draw.
      * @param {Path} path The sequence of grid coordinates to draw.
+     * @param {number} offset The agent's rank (arbitrary, but fixes its colour and path offset in cell)
+     * @param {number} offsetMax The number of agents with paths overlapping this agent's path (TODO: use for display readability)
      */
-    public drawPath(path: Path, colour: string, offset: number, offsetMax = this.pathSolution.paths.length) {
+    public drawPath(path: Path, offset: number, offsetMax = this.pathSolution.paths.length) {
         if (path.coordinates.length == 0) {
             return;
         };
-        this.context.lineWidth = 1 / offsetMax;
-        this.context.strokeStyle = colour;
-        this.context.lineCap = "round";
-        // this.context.lineJoin = "round";
-        this.context.globalCompositeOperation = "hue";
-        var off = offset / offsetMax + 0.5 * 1 / offsetMax;
+
+        var lineWidth = 1 / offsetMax;
+        var pathOffset = offset * lineWidth + 0.5 / offsetMax;
+
         let coord = path.coordinates[0];
+        let textCoords = ["0"] // time steps to display on top of path
+
+        // Path drawing
+        this.context.lineWidth = lineWidth;
+        this.context.strokeStyle = this.getAgentColour(offset);
+        this.context.lineCap = "round";
+        this.context.globalCompositeOperation = "hue";
         this.context.beginPath()
-        this.context.moveTo(coord.x + off, coord.y + off);
-        for (var i = 1; i < path.coordinates.length; i++) {
+        this.context.moveTo(coord.x + pathOffset, coord.y + pathOffset);
+        for (let i = 1; i < path.coordinates.length; i++) {
+            // Draw path
             coord = path.coordinates[i];
-            this.context.lineTo(coord.x + off, coord.y + off);
+            this.context.lineTo(coord.x + pathOffset, coord.y + pathOffset);
+
+            // Pre-compute time steps to display on top of path
+            let firstIndex = path.coordinates.findIndex(function (e, i, a) { return e.x === coord.x && e.y === coord.y });
+            if (firstIndex >= 0 && firstIndex < i) {
+                textCoords[firstIndex] += "," + i.toString();
+                textCoords.push("");
+            } else {
+                textCoords.push(i.toString());
+            }
         }
         this.context.stroke();
-        this.context.closePath();
+
+        // Time steps writing
+        this.context.font = (1 / offsetMax * 0.5).toString() + "px sans-serif";
+        this.context.textAlign = "center";
+        this.context.globalCompositeOperation = "source-over";
+        this.context.fillStyle = getComplementaryColour(this.getAgentColour(offset));
+        this.context.beginPath();
+        for (let i = 0; i < path.coordinates.length; i++) {
+            coord = path.coordinates[i];
+            let text = textCoords[i];
+            this.context.fillText(text, coord.x + pathOffset, coord.y + pathOffset, lineWidth);
+        }
+        this.context.stroke();
     }
 
     // ----- MAP ZOOM & TRANSLATE -----
