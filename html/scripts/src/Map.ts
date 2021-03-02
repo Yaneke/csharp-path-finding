@@ -66,11 +66,16 @@ class GridMap {
         this.pathSolution = pathAnswer;
         this.draw(true);
     }
+
     public getAgentColour(agentNum: number) {
         while (this.agentColours.length <= agentNum) {
             this.agentColours.push(getRandomColour());
         }
         return this.agentColours[agentNum];
+    }
+
+    public getNextAgentColour() {
+        return this.getAgentColour(this.pathRequest.length());
     }
 
     // DRAWING FUNCTIONALITIES
@@ -106,16 +111,14 @@ class GridMap {
             // Draws the answer paths, if any
             let i = 0;
             this.pathSolution.paths.forEach(path => {
-                console.log("Colour for agent " + i + ": " + this.agentColours[i]);
-                this.drawPath(path, this.agentColours[i], i);
+                console.log("Colour for agent " + i + ": " + this.getAgentColour(i));
+                this.drawPath(path, this.getAgentColour(i), i);
                 i++;
             });
 
             // Draws (source -> goal) arrows for each path that doesn't have an answer
-            let colourIndex = 0;
             for (let j = i; j < this.pathRequest.length(); j++) {
-                this.drawArrow(this.pathRequest.start[j], this.pathRequest.end[j], this.agentColours[colourIndex]);
-                colourIndex++;
+                this.drawArrow(this.pathRequest.start[j], this.pathRequest.end[j], this.getAgentColour(j));
             }
 
             // Draw map grid
@@ -147,7 +150,7 @@ class GridMap {
         let headlen = 2.5 * width; // length of head in cells
         this.context.lineWidth = width; // width of arrow (in cells)
         if (!colour) {
-            this.context.strokeStyle = this.getAgentColour(this.pathRequest.length());
+            this.context.strokeStyle = this.getNextAgentColour();
         } else {
             this.context.strokeStyle = colour;
         }

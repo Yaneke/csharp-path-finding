@@ -1,8 +1,7 @@
 "use strict";
 
+var mapselect = null;
 var canvas = null;
-var context = null;
-
 var map = null;
 
 // MAP METADATA
@@ -34,11 +33,9 @@ window.onload = function () {
         }
     });
 
-    canvas = $("#canvas");
     mapselect = $("#mapselect");
+    canvas = $("#canvas");
     map = new GridMap(canvas);
-    context = canvas[0].getContext("2d");
-    trackTransforms(context);
 
     resetMode();
 
@@ -109,6 +106,7 @@ window.onload = function () {
     });
 
     canvas.on("mousedown", function (_event) {
+        _event.preventDefault(); // avoids double-click text selection when zooming fast
         mouseMoved = false;
         if (cntrlIsPressed) {
             // Moving the mouse will drag, releasing it without moving will zoom (dezoom if shift is pressed)
@@ -215,7 +213,8 @@ function updateConflicts(_event) {
 }
 
 
-// MAP MODES
+// ----- MAP MODES -----
+
 function resetMode() {
     dragZoomMode = false;
     addPathMode = false;
@@ -229,13 +228,10 @@ function updateMousePos(event) {
     var lastX = (event.offsetX || (event.pageX - canvas[0].offsetLeft));
     var lastY = (event.offsetY || (event.pageY - canvas[0].offsetTop));
 
-    var trans = map.toGridCoords(lastX, lastY); // converts canvas coordinates to map coordinates
+    mousePosRaw = map.toGridCoords(lastX, lastY); // converts canvas coordinates to map coordinates
 
-    mousePosRaw.x = trans.x;
-    mousePosRaw.y = trans.y;
-
-    mousePos.x = Math.min(Math.max(0, Math.floor(trans.x)), map.width - 1);
-    mousePos.y = Math.min(Math.max(0, Math.floor(trans.y)), map.height - 1);
+    mousePos.x = Math.min(Math.max(0, Math.floor(mousePosRaw.x)), map.width - 1);
+    mousePos.y = Math.min(Math.max(0, Math.floor(mousePosRaw.y)), map.height - 1);
     $("#xMousePos").val(mousePos.x);
     $("#yMousePos").val(mousePos.y);
 }
@@ -258,7 +254,7 @@ function whileDraggingMap() {
     }
 }
 
-// ----- MAP LOADING + CANVAS RESIZING -----
+// ----- MAP LOADING -----
 
 function loadMapList(result) {
     result.forEach(element => {
@@ -291,72 +287,3 @@ function loadMap() {
         console.log(err);
     });
 }
-
-function resizeCanvas(resetTransform = false) {
-    var prevCenter, prevZoom;
-    if (!resetTransform) {
-        prevCenter = context.transformedPoint(canvas[0].width / 2, canvas[0].height / 2);
-        prevZoom = zoomLevel;
-    }
-    zoomLevel = zoomMin;
-    context.setTransform(1, 0, 0, 1, 0, 0);
-    canvas.prop("width", canvas.innerWidth()); // maximize width to use all available pixels
-    var canvasBaseScale = canvas[0].width * 1.0 / map.width;
-    canvas.prop("height", map.height * canvasBaseScale); // adjust height to maintain aspect ratio
-    context.scale(canvasBaseScale, canvasBaseScale);
-
-    if (!resetTransform) {
-        // translateMap({x: 0, y: 0}, prevCenter); // TODO centering is a bit off
-        zoomMapTo(prevZoom, prevCenter);
-    }
-};
-
-// ----- MAP ZOOM & TRANSLATE -----
-function translateBounded(trans) {
-    var topLeftBound = context.transformedPoint(0, 0);
-    var botRightBound = context.transformedPoint(canvas[0].width, canvas[0].height);
-    var transBound = {
-        xPos: topLeftBound.x,
-        yPos: topLeftBound.y,
-        xNeg: map.width - botRightBound.x,
-        yNeg: map.height - botRightBound.y
-    }
-    var boundedX = trans.x < 0 ? - Math.min(transBound.xNeg, -trans.x) : Math.min(transBound.xPos, trans.x);
-    var boundedY = trans.y < 0 ? - Math.min(transBound.yNeg, -trans.y) : Math.min(transBound.yPos, trans.y);
-    return { x: boundedX, y: boundedY };
-}
-
-function translateMap(trans) {
-    translateMapFromTo({ x: 0, y: 0 }, trans);
-}
-
-function translateMapFromTo(from = dragStart, to = mousePosRaw) {
-    var diff = { x: to.x - from.x, y: to.y - from.y };
-    var trans = translateBounded(diff);
-
-    context.translate(trans.x, trans.y);
-
-    // prevents scaling from putting map out of bouds
-    var topLeft = context.transformedPoint(0, 0);
-    context.translate(Math.min(topLeft.x, 0), Math.min(topLeft.y, 0));
-    map.draw(true); // TODO use callback instead ?
-}
-
-function zoomMapTo(value, center = context.transformedPoint(canvas[0].width / 2, canvas[0].height / 2)) {
-    zoomMap(value - zoomLevel, center)
-}
-
-function zoomMap(diff, center = mousePosRaw) {
-    var newLevel = (diff > 0) ? Math.min(zoomLevel + diff, zoomMax) : Math.max(zoomLevel + diff, zoomMin);
-    var trueDiff = newLevel - zoomLevel;
-    zoomLevel = newLevel;
-    var scaleFactor = Math.pow(map.width, 1.0 / (zoomMax - zoomMin));
-    var factor = Math.pow(scaleFactor, trueDiff);
-
-    context.translate(center.x, center.y); // resets origin so that it scales from center
-    context.scale(factor, factor);
-    translateMap({ x: -center.x, y: -center.y }); // takes care of re-drawing map
-    //console.log("Zoomed " + trueDiff + " times, current zoom: " + zoomLevel);
-}
-
-
