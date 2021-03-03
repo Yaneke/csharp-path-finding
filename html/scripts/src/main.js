@@ -275,9 +275,10 @@ function loadMap() {
     $.post("/updateMapSettings", JSON.stringify(buildMapSettings()), function (result) {
         map.reset();
         resetPathTable();
-        var lines = result.split("\n");
-        map.setWidth(lines[2].split(" ")[1]);
+        var lines = result.split(/\r?\n/);
+        map.setType(lines[0].split(" ")[1]);
         map.setHeight(lines[1].split(" ")[1]);
+        map.setWidth(lines[2].split(" ")[1]);
         map.setData(lines.slice(4, lines.length));
 
         setZoom(map.resizeCanvas(true));

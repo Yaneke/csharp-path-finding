@@ -20,10 +20,10 @@ namespace graph {
                     List<GridVertex> rowVertices = new List<GridVertex>();
                     string line = lines[i];
                     for (int j = 0; j < line.Length; j++) {
-                        if (line[j] == '.') {
-                            rowVertices.Add(new GridVertex(i - 4, j));
-                        } else {
+                        if (line[j] == '@') {
                             rowVertices.Add(null);
+                        } else {
+                            rowVertices.Add(new GridVertex(i - 4, j));
                         }
                     }
                     this.grid.Add(rowVertices);
@@ -31,7 +31,7 @@ namespace graph {
             }
 
             for (int i = 0; i < this.RowCount; i++) {
-                for (int j = 0; j < this.grid[i].Count; j++) {
+                for (int j = 0; j < this.ColCount; j++) {
                     Vertex v = this.grid[i][j];
                     if (v != null) {
                         this.Add(v, i, j);

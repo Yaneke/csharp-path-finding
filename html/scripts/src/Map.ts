@@ -3,11 +3,13 @@ const zoomMin = 1, zoomMax = 20; // 1 = show whole map in canvas ... 20 = show s
 class GridMap {
     canvas: any;
     context: CanvasRenderingContext2D;
-    data: string[][];
     image: any;
 
     width: number;
     height: number;
+    data: string[][];
+    isFullyAdjacent: boolean;
+
     zoomLevel: number;
     agentColours: Array<string>;
 
@@ -38,6 +40,10 @@ class GridMap {
         this.pathRequest = new PathRequest();
         this.pathSolution = new PathAnswer();
         this.draw(true); // forces re-drawing so as to remove previous paths
+    }
+
+    public setType(type: string) {
+        this.isFullyAdjacent = type === "octile";
     }
 
     public setWidth(width: string) {
@@ -98,14 +104,7 @@ class GridMap {
             this.context.restore();
 
             // Draws map boundaries and obstacles
-            this.context.fillStyle = "black";
-            for (let i = 0; i < this.height; i++) {
-                for (let j = 0; j < this.width; j++) {
-                    if (this.data[i][j] != ".") {
-                        this.context.fillRect(j, i, 1, 1);
-                    }
-                }
-            }
+            this.drawMap();
 
             // Draws the answer paths, if any
             let i = 0;
@@ -121,21 +120,25 @@ class GridMap {
             }
 
             // Draw map grid
-            this.context.fillStyle = "black";
-            this.context.globalCompositeOperation = "source-over";
-            var gridWidth = 1 / 100;
-            for (var x = 1; x < this.width; x++) {
-                this.context.fillRect(x - gridWidth / 2, 0, gridWidth, this.height);
-            }
-            for (var y = 1; y < this.height; y++) {
-                this.context.fillRect(0, y - gridWidth / 2, this.width, gridWidth);
-            }
+            this.drawGrid();
 
             // Stores the image data for faster re-drawing
             this.image = this.context.getImageData(0, 0, this.canvas[0].width, this.canvas[0].height);
             this.image.data.set(new Uint8ClampedArray(this.image.data));
         } else {
             this.context.putImageData(this.image, 0, 0);
+        }
+    }
+
+    private drawMap() {
+        this.context.globalCompositeOperation = "source-over";
+        this.context.fillStyle = "black";
+        for (let row = 0; row < this.height; row++) {
+            for (let col = 0; col < this.width; col++) {
+                if (this.data[row][col] === "@") {
+                    this.context.fillRect(col, row, 1, 1);
+                }
+            }
         }
     }
 
@@ -187,8 +190,9 @@ class GridMap {
             return;
         };
 
-        var lineWidth = 1 / offsetMax;
-        var pathOffset = offset * lineWidth + 0.5 / offsetMax;
+        var borderWidth = this.isFullyAdjacent ? 1 / 100 : 1 / 10;
+        var lineWidth = (1 - 2 * borderWidth) / offsetMax;
+        var pathOffset = borderWidth + (offset + 0.5) * lineWidth;
 
         let coord = path.coordinates[0];
         let textCoords = ["0"] // time steps to display on top of path
@@ -228,6 +232,38 @@ class GridMap {
             this.context.fillText(text, coord.x + pathOffset, coord.y + pathOffset, lineWidth);
         }
         this.context.stroke();
+    }
+
+    private drawGrid() {
+        this.context.globalCompositeOperation = "source-over";
+
+        // Draw non-adjacency walls
+        if (!this.isFullyAdjacent) {
+            this.context.fillStyle = "black";
+            for (let row = 0; row < this.height; row++) {
+                for (let col = 0; col < this.width; col++) {
+                    var cellData = this.data[row][col];
+                    if (cellData !== "." && cellData !== "T" && cellData !== "@") {
+                        var adj = new Adjacency(cellData);
+                        var borderWidth = 1 / 10;
+                        if (!adj.Top) this.context.fillRect(col, row - borderWidth, 1, borderWidth * 2);
+                        if (!adj.Right) this.context.fillRect(col + 1 - borderWidth, row, borderWidth * 2, 1);
+                        if (!adj.Bottom) this.context.fillRect(col, row + 1 - borderWidth, 1, borderWidth * 2);
+                        if (!adj.Left) this.context.fillRect(col - borderWidth, row, borderWidth * 2, 1);
+                    }
+                }
+            }
+        }
+
+        // Draw cell grid
+        this.context.fillStyle = "black";
+        var gridWidth = 1 / 100;
+        for (var x = 1; x < this.width; x++) {
+            this.context.fillRect(x - gridWidth / 2, 0, gridWidth, this.height);
+        }
+        for (var y = 1; y < this.height; y++) {
+            this.context.fillRect(0, y - gridWidth / 2, this.width, gridWidth);
+        }
     }
 
     // ----- MAP ZOOM & TRANSLATE -----
