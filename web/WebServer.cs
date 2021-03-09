@@ -16,6 +16,7 @@ namespace visualisation {
         private IEnumerator<CBSNode> cbsEnumerator;
         private data_objects.PathRequestDO prevRequest;
 
+        private static string HTML_DIR = "web/html/";
 
         public HttpServer(string url) {
             this.listener = new HttpListener();
@@ -48,7 +49,7 @@ namespace visualisation {
             }
             byte[] data;
             try {
-                data = File.ReadAllBytes("html/" + path);
+                data = File.ReadAllBytes(HTML_DIR + path);
                 if (path.EndsWith(".js")) {
                     resp.ContentType = "text/javascript";
                 } else if (path.EndsWith(".css")) {
@@ -58,12 +59,12 @@ namespace visualisation {
                 }
             }
             catch (System.IO.FileNotFoundException) {
-                data = File.ReadAllBytes("html/404.html");
+                data = File.ReadAllBytes(HTML_DIR + "404.html");
                 resp.ContentType = "text/html";
                 resp.StatusCode = (int)HttpStatusCode.NotFound;
             }
             catch (System.IO.DirectoryNotFoundException) {
-                data = File.ReadAllBytes("html/404.html");
+                data = File.ReadAllBytes(HTML_DIR + "404.html");
                 resp.ContentType = "text/html";
                 resp.StatusCode = (int)HttpStatusCode.NotFound;
             }

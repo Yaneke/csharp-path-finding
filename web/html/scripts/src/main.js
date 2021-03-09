@@ -159,7 +159,7 @@ window.onload = function () {
         let srcy = $("#srcy" + agentNum).val() || 0;
         let dstx = $("#dstx" + agentNum).val() || 0;
         let dsty = $("#dsty" + agentNum).val() || 0;
-        map.addArrow(new Coordinate(srcx, srcy), new Coordinate(dstx, dsty));
+        map.addArrow(new Coordinate(srcx, srcy), new Coordinate(dstx, dsty), agentNum);
     });
 
     canvas.on("mouseout", function () {

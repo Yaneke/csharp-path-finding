@@ -62,8 +62,13 @@ class GridMap {
         return this.pathRequest;
     }
 
-    public addArrow(start: Coordinate, end: Coordinate) {
-        this.pathRequest.addRequest(new Coordinate(start.x, start.y), new Coordinate(end.x, end.y));
+    public addArrow(start: Coordinate, end: Coordinate, id: number = null) {
+        if (id !== null) {
+            this.pathRequest.start[id] = start;
+            this.pathRequest.end[id] = end;
+        } else {
+            this.pathRequest.addRequest(new Coordinate(start.x, start.y), new Coordinate(end.x, end.y));
+        }
         this.draw(true);
     }
 
